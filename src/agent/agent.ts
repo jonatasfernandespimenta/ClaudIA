@@ -44,7 +44,7 @@ export async function askAgent(question: string): Promise<string> {
   }
 
   if (Array.isArray(last.content)) {
-    return last.content.map((part: any) => part.text ?? '').join('');
+    return (last.content as Array<{ text?: string }>).map((part) => part.text ?? '').join('');
   }
 
   return '';
