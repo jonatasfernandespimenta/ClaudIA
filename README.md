@@ -64,6 +64,9 @@ cp .env.example .env
 # MICROSOFT_GRAPH_CLIENT_SECRET=your_microsoft_client_secret
 # OPENAI_API_KEY=your_openai_api_key
 
+# Set up calendar accounts
+claudia --config calendar
+
 # Build the project
 npm run build
 
