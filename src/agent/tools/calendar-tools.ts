@@ -38,7 +38,7 @@ export const searchDayEventsTool = tool(
   },
   {
     name: 'search_day_events',
-    description: 'Search appointments for a specific day',
+    description: 'Search and retrieve calendar events for a specific day, returning complete event information including exact titles, times, descriptions, locations, and attendees from Google Calendar, Microsoft Calendar, or other connected sources',
     schema: searchDayEventsSchema,
   },
 );
@@ -51,7 +51,7 @@ export const searchWeekEventsTool = tool(
   },
   {
     name: 'search_week_events',
-    description: 'Search appointments for a specific week',
+    description: 'Search and retrieve calendar events for an entire week, returning complete event information including exact titles, times, descriptions, locations, and attendees from all connected calendar sources',
     schema: searchWeekEventsSchema,
   },
 );
@@ -64,7 +64,7 @@ export const searchMonthEventsTool = tool(
   },
   {
     name: 'search_month_events',
-    description: 'Search appointments for a specific month',
+    description: 'Search and retrieve calendar events for an entire month, returning complete event information including exact titles, times, descriptions, locations, and attendees from all connected calendar sources',
     schema: searchMonthEventsSchema,
   },
 );
@@ -77,7 +77,7 @@ export const searchEventsByTimeTool = tool(
   },
   {
     name: 'search_events_by_time',
-    description: 'Search events within a specific time range',
+    description: 'Search and retrieve calendar events within a custom time range, returning complete event information including exact titles, times, descriptions, locations, and attendees from all connected calendar sources',
     schema: searchEventsByTimeSchema,
   },
 );
