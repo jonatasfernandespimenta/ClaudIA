@@ -111,4 +111,8 @@ dist
 .idea/
 
 /src/generated/prisma
-prisma/dev.db
+# Prisma database files
+prisma/*.db
+prisma/*.db-journal
+prisma/*.sqlite
+prisma/*.sqlite3
