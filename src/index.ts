@@ -1,5 +1,6 @@
 import blessed from 'blessed';
 import { askAgent } from './agent/agent';
+import { logInfo, logError } from './utils/logger';
 
 async function main(): Promise<void> {
   const screen = blessed.screen({
@@ -7,6 +8,7 @@ async function main(): Promise<void> {
     title: '🤖 ClaudIA - Assistente Inteligente',
     fullUnicode: true,
   });
+  logInfo('Application started');
 
   // Header com informações
   const header = blessed.box({
@@ -134,6 +136,7 @@ async function main(): Promise<void> {
 
   screen.key(['C-c', 'q'], () => {
     updateStatus('🔄 Encerrando aplicação...');
+    logInfo('Application terminated by user');
     setTimeout(() => process.exit(0), 500);
   });
 
@@ -147,6 +150,8 @@ async function main(): Promise<void> {
       return;
     }
 
+    logInfo(`User question: ${question}`);
+
     // Formatação colorida para mensagem do usuário
     chat.add(`{bold}{blue-fg}👤 Você:{/blue-fg}{/bold} {white-fg}${question}{/white-fg}`);
     chat.add(''); // Linha em branco para espaçamento
@@ -155,11 +160,13 @@ async function main(): Promise<void> {
 
     try {
       const answer = await askAgent(question);
+      logInfo(`Agent answer: ${answer}`);
       // Formatação colorida para resposta da IA
       chat.add(`{bold}{green-fg}🤖 ClaudIA:{/green-fg}{/bold} {yellow-fg}${answer}{/yellow-fg}`);
       chat.add(''); // Linha em branco para espaçamento
       updateStatus('✅ Resposta enviada! Digite sua próxima pergunta...');
     } catch (error) {
+      logError((error as Error).message);
       chat.add(`{bold}{red-fg}❌ Erro:{/red-fg}{/bold} {red-fg}${(error as Error).message}{/red-fg}`);
       chat.add(''); // Linha em branco para espaçamento
       updateStatus('⚠️ Erro ocorreu! Tente novamente...');
