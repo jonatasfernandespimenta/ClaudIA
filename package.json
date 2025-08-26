@@ -18,7 +18,9 @@
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
-    "db:seed": "ts-node prisma/seed.ts"
+    "db:seed": "ts-node prisma/seed.ts",
+    "auth:google": "node scripts/google-auth.js",
+    "auth:google-simple": "node scripts/google-auth-simple.js"
   },
   "keywords": [
     "ai",
@@ -54,6 +56,7 @@
     "@prisma/client": "^6.14.0",
     "blessed": "^0.1.81",
     "dotenv": "^17.2.1",
+    "googleapis": "^157.0.0",
     "i": "^0.3.7",
     "langchain": "^0.3.31",
     "node-notifier": "^10.0.1",
