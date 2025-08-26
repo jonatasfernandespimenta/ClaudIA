@@ -8,6 +8,7 @@ import {
   findAllRemindersSinceToolSchema,
   findAllRemindersToolSchema
 } from "./reminder-schemas";
+import { logInfo, logError } from "../../utils/logger";
 
 import { ReminderRepository } from "../../modules/reminder/domain/repositories/reminder-repository";
 import { PrismaReminderRepository } from "../../modules/reminder/infra/prisma-reminder-repository";
@@ -26,12 +27,27 @@ const reminderRepository: ReminderRepository = new PrismaReminderRepository(pris
 export const createReminderTool = tool(
   async (input) => {
     const { message, status } = input as z.infer<typeof createReminderToolSchema>;
-    const createReminder = new CreateReminderUseCase(reminderRepository);
-    const result = await createReminder.execute({ 
-      message, 
-      status: status ? status as ReminderStatus : undefined 
+    logInfo('ReminderTool', 'Creating reminder via tool', { 
+      messageLength: message.length,
+      status: status || 'PENDING'
     });
-    return result;
+    
+    try {
+      const createReminder = new CreateReminderUseCase(reminderRepository);
+      const result = await createReminder.execute({ 
+        message, 
+        status: status ? status as ReminderStatus : undefined 
+      });
+      
+      logInfo('ReminderTool', 'Reminder created successfully via tool', { 
+        messageLength: message.length
+      });
+      
+      return result;
+    } catch (error) {
+      logError('ReminderTool', 'Error creating reminder via tool', error as Error, { message, status });
+      throw error;
+    }
   },
   {
     name: "create_reminder",
@@ -83,9 +99,26 @@ export const findRemindersByStatusTool = tool(
 export const updateReminderStatusTool = tool(
   async (input) => {
     const { id, status } = input as z.infer<typeof updateReminderStatusToolSchema>;
-    const updateReminderStatus = new UpdateReminderStatusUseCase(reminderRepository);
-    const result = await updateReminderStatus.execute({ id, status: status as ReminderStatus });
-    return JSON.stringify(result, null, 2);
+    logInfo('ReminderTool', 'Updating reminder status via tool', { 
+      id, 
+      newStatus: status
+    });
+    
+    try {
+      const updateReminderStatus = new UpdateReminderStatusUseCase(reminderRepository);
+      const result = await updateReminderStatus.execute({ id, status: status as ReminderStatus });
+      
+      logInfo('ReminderTool', 'Reminder status updated successfully via tool', { 
+        id, 
+        updated: result.updated,
+        newStatus: status
+      });
+      
+      return JSON.stringify(result, null, 2);
+    } catch (error) {
+      logError('ReminderTool', 'Error updating reminder status via tool', error as Error, { id, status });
+      throw error;
+    }
   },
   {
     name: "update_reminder_status",

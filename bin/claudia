@@ -1,0 +1,17 @@
+#!/usr/bin/env node
+
+const path = require('path');
+const { spawn } = require('child_process');
+
+// Caminho para o arquivo principal compilado
+const mainPath = path.join(__dirname, '..', 'dist', 'index.js');
+
+// Executa o arquivo principal
+const child = spawn('node', [mainPath], {
+  stdio: 'inherit',
+  env: process.env
+});
+
+child.on('exit', (code) => {
+  process.exit(code);
+});

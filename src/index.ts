@@ -1,14 +1,17 @@
 import blessed from 'blessed';
 import { askAgent } from './agent/agent';
-import { logInfo, logError } from './utils/logger';
+import { logInfo, logError, logWarn } from './utils/logger';
 
 async function main(): Promise<void> {
+  logInfo('UI', 'Starting ClaudIA application');
+  
   const screen = blessed.screen({
     smartCSR: true,
     title: '🤖 ClaudIA - Assistente Inteligente',
     fullUnicode: true,
   });
-  logInfo('Application started');
+  
+  logInfo('UI', 'Blessed screen created successfully');
 
   // Header com informações
   const header = blessed.box({
@@ -130,14 +133,18 @@ async function main(): Promise<void> {
   };
 
   // Mensagem de boas-vindas
+  logInfo('UI', 'Displaying welcome message to user');
   chat.add('{center}{bold}{cyan-fg}🌟 Bem-vindo ao ClaudIA! 🌟{/cyan-fg}{/bold}{/center}');
   chat.add('{center}{green-fg}Faça qualquer pergunta e eu te ajudo! 😊{/green-fg}{/center}');
   chat.add(''); // Linha em branco para espaçamento
 
   screen.key(['C-c', 'q'], () => {
+    logInfo('UI', 'User requested application exit');
     updateStatus('🔄 Encerrando aplicação...');
-    logInfo('Application terminated by user');
-    setTimeout(() => process.exit(0), 500);
+    setTimeout(() => {
+      logInfo('UI', 'ClaudIA application shutting down');
+      process.exit(0);
+    }, 500);
   });
 
   input.on('submit', async (value: string) => {
@@ -146,27 +153,38 @@ async function main(): Promise<void> {
     screen.render();
 
     if (!question) {
+      logWarn('UI', 'User submitted empty question');
       input.focus();
       return;
     }
-
-    logInfo(`User question: ${question}`);
+    
+    logInfo('UI', 'User submitted question', { 
+      questionLength: question.length,
+      question: question.substring(0, 100) // Log first 100 chars for privacy
+    });
 
     // Formatação colorida para mensagem do usuário
     chat.add(`{bold}{blue-fg}👤 Você:{/blue-fg}{/bold} {white-fg}${question}{/white-fg}`);
     chat.add(''); // Linha em branco para espaçamento
     updateStatus('🤔 ClaudIA está pensando...');
     screen.render();
+    
+    logInfo('UI', 'Sending question to agent');
 
     try {
       const answer = await askAgent(question);
-      logInfo(`Agent answer: ${answer}`);
+      
+      logInfo('UI', 'Received response from agent', { 
+        answerLength: answer.length 
+      });
+      
       // Formatação colorida para resposta da IA
       chat.add(`{bold}{green-fg}🤖 ClaudIA:{/green-fg}{/bold} {yellow-fg}${answer}{/yellow-fg}`);
       chat.add(''); // Linha em branco para espaçamento
       updateStatus('✅ Resposta enviada! Digite sua próxima pergunta...');
     } catch (error) {
-      logError((error as Error).message);
+      logError('UI', 'Error occurred during agent interaction', error as Error, { question });
+      
       chat.add(`{bold}{red-fg}❌ Erro:{/red-fg}{/bold} {red-fg}${(error as Error).message}{/red-fg}`);
       chat.add(''); // Linha em branco para espaçamento
       updateStatus('⚠️ Erro ocorreu! Tente novamente...');
@@ -178,7 +196,13 @@ async function main(): Promise<void> {
 
   input.focus();
   screen.render();
+  
+  logInfo('UI', 'ClaudIA UI fully initialized and ready for interaction');
 }
 
-main();
+main().catch((error) => {
+  logError('UI', 'Fatal error in main function', error as Error);
+  console.error('Fatal error:', error);
+  process.exit(1);
+});
 

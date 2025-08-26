@@ -1,4 +1,5 @@
 import { CheckpointRepository } from "../../domain/repositories/checkpoint-repository";
+import { logInfo, logError } from "../../../../utils/logger";
 
 interface Input {
   id: string;
@@ -15,18 +16,31 @@ export class FindCheckpointByIdUseCase {
   ) {}
 
   async execute(props: Input): Promise<Output> {
-    const checkpoint = await this.checkpointRepository.findById(props.id);
+    logInfo('FindCheckpointByIdUseCase', 'Starting to find checkpoint by ID', { id: props.id });
+    
+    try {
+      const checkpoint = await this.checkpointRepository.findById(props.id);
 
-    if (!checkpoint) {
+      if (!checkpoint) {
+        logInfo('FindCheckpointByIdUseCase', 'Checkpoint not found', { id: props.id });
+        return {
+          checkpoint: null,
+          found: false
+        };
+      }
+
+      logInfo('FindCheckpointByIdUseCase', 'Checkpoint found successfully', { 
+        id: props.id, 
+        projectName: checkpoint.projectName 
+      });
+      
       return {
-        checkpoint: null,
-        found: false
+        checkpoint: checkpoint.toString(),
+        found: true
       };
+    } catch (error) {
+      logError('FindCheckpointByIdUseCase', 'Error finding checkpoint by ID', error as Error, { id: props.id });
+      throw error;
     }
-
-    return {
-      checkpoint: checkpoint.toString(),
-      found: true
-    };
   }
 }

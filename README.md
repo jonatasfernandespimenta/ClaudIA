@@ -1,216 +1,285 @@
-# ClaudIA - Intelligent CLI Productivity Platform
+# 🤖 ClaudIA - Assistente Inteligente de Produtividade CLI
 
 <p align="center">
   <img src="https://img.shields.io/badge/Node.js-43853D?style=for-the-badge&logo=node.js&logoColor=white" alt="Node.js" />
   <img src="https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
   <img src="https://img.shields.io/badge/LangChain-1C3C3C?style=for-the-badge&logo=langchain&logoColor=white" alt="LangChain" />
+  <img src="https://img.shields.io/badge/OpenAI-412991?style=for-the-badge&logo=openai&logoColor=white" alt="OpenAI" />
+  <img src="https://img.shields.io/badge/Prisma-2D3748?style=for-the-badge&logo=prisma&logoColor=white" alt="Prisma" />
 </p>
 
-## 📋 Overview
+## 📋 Visão Geral
 
-ClaudIA is an intelligent command-line productivity platform that combines the power of AI with seamless calendar integration. Built with Node.js and enhanced with LangChain/LangGraph, ClaudIA provides an interactive terminal interface for managing your daily productivity through reminders, checkpoints, TODO lists, and intelligent scheduling assistance.
+ClaudIA é um assistente inteligente de produtividade executado via linha de comando (CLI) que combina o poder da Inteligência Artificial com uma interface terminal interativa e elegante. Construído com Node.js, TypeScript e potencializado pelo LangChain/LangGraph, o ClaudIA oferece uma experiência conversacional natural para gerenciar sua produtividade através de lembretes, checkpoints de projetos e integração com calendários.
 
-## ✨ Features
+## ✨ Funcionalidades
 
-### 🤖 AI-Powered Agent
-- **Natural Language Processing**: Communicate with the AI agent using natural language
-- **Intelligent Task Management**: Create and organize reminders, checkpoints, and TODOs
-- **Smart Scheduling**: Get personalized recommendations on task prioritization and timing
-- **Context-Aware Assistance**: The agent learns your patterns and preferences
+### 🤖 Agente com IA
+- **Processamento de Linguagem Natural**: Comunique-se com o agente usando linguagem natural
+- **Interface Conversacional**: Interação intuitiva através de chat no terminal
+- **Context-Aware**: O agente mantém contexto das conversas e aprende seus padrões
+- **Respostas Inteligentes**: Powered by OpenAI GPT-4o-mini para respostas precisas
 
-### 📅 Calendar Integration
-- **Google Calendar Support**: Seamlessly sync with your Google Calendar
-- **Microsoft Calendar Support**: Full integration with Microsoft/Outlook calendars
-- **Event Retrieval**: Get events for specific days, weeks, or custom time ranges
-- **Real-time Sync**: Stay updated with your latest calendar changes
+### 📝 Gerenciamento de Checkpoints
+- **Criação de Marcos**: Crie checkpoints para marcos importantes dos seus projetos
+- **Busca Inteligente**: Encontre checkpoints por projeto, data ou ID
+- **Histórico Completo**: Visualize todo o progresso dos seus projetos
+- **Organização por Projeto**: Agrupe checkpoints por nome do projeto
 
-### 📝 Productivity Tools
-- **Reminders**: Set and manage time-based reminders
-- **Checkpoints**: Create milestone markers for your projects
-- **TODO Lists**: Generate and manage intelligent task lists
-- **Priority Management**: AI-assisted task prioritization
+### ⏰ Sistema de Lembretes
+- **Lembretes Personalizados**: Crie lembretes com mensagens personalizadas
+- **Gerenciamento de Status**: Controle o status (PENDING, IN_PROGRESS, COMPLETED, CANCELLED)
+- **Busca e Filtragem**: Encontre lembretes por status, data ou ID específico
+- **Atualizações em Tempo Real**: Atualize status e acompanhe progresso
 
-### 🖥️ Terminal Interface
-- **Blessed UI**: Rich, interactive terminal user interface
-- **Cross-platform**: Works on macOS, Linux, and Windows
-- **Keyboard Navigation**: Full keyboard shortcuts and navigation
-- **Responsive Design**: Adapts to different terminal sizes
+### 📅 Integração com Calendários (Planejado)
+- **Suporte ao Google Calendar**: Integração com Google Calendar
+- **Suporte ao Microsoft Calendar**: Integração com calendários Microsoft/Outlook
+- **Busca de Eventos**: Recupere eventos para dias, semanas ou períodos personalizados
+- **Análise de Tempo**: Calcule uso do tempo e identifique slots livres
 
-## 🚀 Installation
+### 🖥️ Interface Terminal Elegante
+- **Blessed UI**: Interface rica e interativa no terminal
+- **Design Responsivo**: Adapta-se a diferentes tamanhos de terminal
+- **Navegação por Teclado**: Atalhos de teclado completos
+- **Multiplataforma**: Funciona em macOS, Linux e Windows
 
-### Prerequisites
-- Node.js (v16 or higher)
-- npm or yarn package manager
-- Google Calendar API credentials (optional)
-- Microsoft Graph API credentials (optional)
+## 🚀 Instalação
 
-### Quick Start
+### Pré-requisitos
+- Node.js (v16 ou superior)
+- npm ou yarn
+- Chave da API OpenAI (obrigatório)
+- Credenciais Google Calendar API (opcional)
+- Credenciais Microsoft Graph API (opcional)
+
+### Instalação Rápida
 
 ```bash
-# Clone the repository
+# Clone o repositório
 git clone https://github.com/your-username/claudia.git
-cd claudia
+cd ClaudIA
 
-# Install dependencies
+# Instale as dependências
 npm install
 
-# Set up environment variables
+# Configure as variáveis de ambiente
 cp .env.example .env
 
-# Configure your API keys in .env file
-# GOOGLE_CALENDAR_CLIENT_ID=your_google_client_id
-# GOOGLE_CALENDAR_CLIENT_SECRET=your_google_client_secret
-# MICROSOFT_GRAPH_CLIENT_ID=your_microsoft_client_id
-# MICROSOFT_GRAPH_CLIENT_SECRET=your_microsoft_client_secret
-# OPENAI_API_KEY=your_openai_api_key
+# Edite o arquivo .env e adicione sua chave da OpenAI (OBRIGATÓRIO)
+# OPENAI_API_KEY=sua_chave_openai_aqui
+# 
+# Opcionalmente, adicione credenciais de calendário:
+# GOOGLE_CLIENT_ID=seu_google_client_id
+# GOOGLE_CLIENT_SECRET=seu_google_client_secret
+# MICROSOFT_CLIENT_ID=seu_microsoft_client_id
+# MICROSOFT_CLIENT_SECRET=seu_microsoft_client_secret
 
-# Set up calendar accounts
-claudia --config calendar
+# Configure o banco de dados
+npm run db:generate
+npm run db:push
 
-# Build the project
+# Compile o projeto
 npm run build
 
-# Start ClaudIA
+# Execute o ClaudIA
 npm start
 ```
 
-### Global Installation
+### Instalação Global (Recomendado)
+
+Para usar o comando `claudia` de qualquer lugar do terminal:
 
 ```bash
-# Install globally via npm
-npm install -g claudia-cli
+# Navegue até o diretório do projeto
+cd ClaudIA
 
-# Run from anywhere
+# Instale globalmente usando npm link
+npm link
+
+# Agora você pode executar de qualquer lugar:
 claudia
 ```
 
-## 📖 Usage
-
-### Basic Commands
+**Ou via npm (quando publicado):**
 
 ```bash
-# Start the interactive CLI
+# Instalar globalmente via npm
+npm install -g claudia-ai
+
+# Executar de qualquer lugar
 claudia
-
-# Quick reminder creation
-claudia remind "Meeting with team" --time "2024-01-15 14:00"
-
-# Create a checkpoint
-claudia checkpoint "Project milestone completed"
-
-# Get today's agenda
-claudia agenda today
-
-# Get this week's events
-claudia agenda week
 ```
 
-### AI Agent Interactions
+## 📚 Como Usar
 
-Once in the interactive mode, you can communicate naturally with the AI agent:
+### Comando Básico
+
+```bash
+# Inicie o ClaudIA (interface conversacional)
+claudia
+```
+
+### Interações com o Agente IA
+
+Após executar o comando `claudia`, você entrará no modo interativo onde pode conversar naturalmente com o assistente:
+
+**Exemplos de Conversação:**
 
 ```
-> "Create a reminder for my dentist appointment tomorrow at 2 PM"
-✓ Reminder created: Dentist appointment on Jan 16, 2024 at 2:00 PM
+👤 Você: "Crie um checkpoint para o projeto website, concluí o design da homepage"
+🤖 ClaudIA: ✓ Checkpoint criado com sucesso!
+   - Projeto: website
+   - Resumo: Concluí o design da homepage
+   - ID: abc123...
+   - Criado em: 26/08/2024 às 01:15
 
-> "What should I work on next?"
-📋 Based on your calendar and pending tasks, I recommend:
-   1. Finish the quarterly report (due in 2 days)
-   2. Prepare for tomorrow's team meeting
-   3. Review code changes from yesterday
-
-> "Show me my schedule for next week"
-📅 Next week's schedule:
-   Monday: Team standup (9 AM), Client call (3 PM)
-   Tuesday: Free until 2 PM, then project review
+👤 Você: "Mostre todos os meus checkpoints do projeto website"
+🤖 ClaudIA: 📋 Aqui estão os checkpoints do projeto 'website':
+   1. Concluí o design da homepage (26/08/2024)
+   2. Implementação do sistema de autenticação (25/08/2024)
    ...
+
+👤 Você: "Crie um lembrete para revisar o código do backend"
+🤖 ClaudIA: ✓ Lembrete criado!
+   - Mensagem: Revisar o código do backend
+   - Status: PENDING
+   - ID: def456...
+
+👤 Você: "Quais são meus lembretes pendentes?"
+🤖 ClaudIA: 📋 Seus lembretes pendentes:
+   1. Revisar o código do backend (PENDING)
+   2. Ligar para o cliente (PENDING)
+   ...
+
+👤 Você: "Marque o primeiro lembrete como em progresso"
+🤖 ClaudIA: ✓ Status atualizado!
+   - Lembrete: Revisar o código do backend
+   - Status alterado para: IN_PROGRESS
 ```
 
-### Configuration
+### Funcionalidades Disponíveis via Conversa
 
-ClaudIA can be configured through the `.env` file or command-line arguments:
+**Gerenciamento de Checkpoints:**
+- “Crie um checkpoint para [projeto] com [descrição]”
+- “Mostre todos os checkpoints”
+- “Mostre checkpoints do projeto [nome]”
+- “Mostre checkpoints desde [data]”
+- “Encontre checkpoint com ID [id]”
 
-```bash
-# Custom configuration file
-claudia --config /path/to/custom-config.json
+**Gerenciamento de Lembretes:**
+- “Crie um lembrete para [tarefa]”
+- “Mostre meus lembretes pendentes”
+- “Mostre todos os lembretes”
+- “Marque lembrete [id] como concluído”
+- “Mostre lembretes desde [data]”
 
-# Specify calendar provider
-claudia --calendar google
+**Busca e Análise:**
+- “Resumo da minha produtividade”
+- “Mostrar progresso dos projetos”
+- “O que eu fiz esta semana?”
 
-# Debug mode
-claudia --debug
-```
+### Navegação na Interface
 
-## 🛠️ Configuration
+- **Enter**: Enviar pergunta/comando
+- **Ctrl+C**: Sair da aplicação
+- **Scroll**: Navegar pelo histórico de conversa
 
-### Environment Variables
+## 🔧️ Configuração
 
-Create a `.env` file in the project root:
+### Variáveis de Ambiente
+
+Crie um arquivo `.env` na raiz do projeto baseado no `.env.example`:
 
 ```env
-# AI Configuration
-OPENAI_API_KEY=your_openai_api_key
-LANGCHAIN_API_KEY=your_langchain_api_key
+# Configuração da IA (OBRIGATÓRIO)
+OPENAI_API_KEY=sua_chave_openai_aqui
 
-# Google Calendar
-GOOGLE_CALENDAR_CLIENT_ID=your_google_client_id
-GOOGLE_CALENDAR_CLIENT_SECRET=your_google_client_secret
-GOOGLE_CALENDAR_REDIRECT_URI=http://localhost:3000/auth/callback
+# Google Calendar (OPCIONAL)
+GOOGLE_CLIENT_ID=seu_google_client_id
+GOOGLE_CLIENT_SECRET=seu_google_client_secret
 
-# Microsoft Graph
-MICROSOFT_GRAPH_CLIENT_ID=your_microsoft_client_id
-MICROSOFT_GRAPH_CLIENT_SECRET=your_microsoft_client_secret
-MICROSOFT_GRAPH_TENANT_ID=your_tenant_id
+# Microsoft Graph (OPCIONAL)
+MICROSOFT_CLIENT_ID=seu_microsoft_client_id
+MICROSOFT_CLIENT_SECRET=seu_microsoft_client_secret
 
-# Database (for local storage)
-DATABASE_URL=sqlite:./claudia.db
-
-# Logging
-LOG_LEVEL=info
+# Banco de Dados (gerado automaticamente)
+DATABASE_URL="file:./prisma/dev.db"
 ```
 
-### Calendar Setup
+**Nota:** Apenas a `OPENAI_API_KEY` é obrigatória para o funcionamento básico. As credenciais de calendário são opcionais e serão implementadas em versões futuras.
+
+### Configuração da OpenAI API
+
+1. Acesse [OpenAI Platform](https://platform.openai.com/)
+2. Crie uma conta ou faça login
+3. Navegue para "API Keys"
+4. Crie uma nova chave de API
+5. Adicione a chave ao seu arquivo `.env`:
+   ```env
+   OPENAI_API_KEY=sk-proj-...
+   ```
+
+### Configuração de Calendários (Futuro)
 
 #### Google Calendar
-1. Go to the [Google Cloud Console](https://console.cloud.google.com/)
-2. Create a new project or select an existing one
-3. Enable the Google Calendar API
-4. Create credentials (OAuth 2.0 Client ID)
-5. Add the credentials to your `.env` file
+1. Vá para o [Google Cloud Console](https://console.cloud.google.com/)
+2. Crie um novo projeto ou selecione um existente
+3. Ative a Google Calendar API
+4. Crie credenciais (OAuth 2.0 Client ID)
+5. Adicione as credenciais ao seu arquivo `.env`
 
 #### Microsoft Calendar
-1. Go to [Azure Portal](https://portal.azure.com/)
-2. Register a new application
-3. Configure API permissions for Microsoft Graph
-4. Generate client secret
-5. Add the credentials to your `.env` file
+1. Vá para o [Azure Portal](https://portal.azure.com/)
+2. Registre uma nova aplicação
+3. Configure permissões de API para Microsoft Graph
+4. Gere client secret
+5. Adicione as credenciais ao seu arquivo `.env`
 
-## 🏗️ Architecture
+## 🏢️ Arquitetura
+
+### Estrutura Real do Projeto
 
 ```
-claudia/
+ClaudIA/
+├── bin/
+│   └── claudia           # Script executável global
 ├── src/
-│   ├── agent/           # LangChain/LangGraph AI agent
-│   ├── calendar/        # Calendar integrations
-│   ├── cli/            # Command-line interface
-│   ├── ui/             # Blessed terminal UI components
-│   ├── database/       # Local data storage
-│   ├── utils/          # Utility functions
-│   └── types/          # TypeScript type definitions
-├── tests/              # Test files
-├── docs/               # Documentation
-└── config/            # Configuration files
+│   ├── agent/            # Agente IA com LangChain/LangGraph
+│   │   ├── agent.ts       # Implementação principal do agente
+│   │   ├── prompts.ts     # System prompts e configurações
+│   │   ├── tool-inventory.ts # Inventário de ferramentas
+│   │   └── tools/         # Ferramentas do agente
+│   │       ├── checkpoint-tools.ts
+│   │       ├── reminder-tools.ts
+│   │       └── calendar-tools.ts
+│   ├── types/            # Definições TypeScript
+│   └── index.ts          # Interface do usuário (Blessed UI)
+├── prisma/
+│   ├── schema.prisma     # Esquema do banco de dados
+│   └── dev.db            # Banco SQLite
+├── package.json          # Configurações e dependências
+├── tsconfig.json        # Configuração TypeScript
+└── .env                 # Variáveis de ambiente
 ```
 
-### Key Technologies
+### Tecnologias Principais
 
-- **Node.js**: Runtime environment
-- **TypeScript**: Type-safe development
-- **LangChain/LangGraph**: AI agent framework
-- **Blessed**: Terminal UI library
-- **SQLite**: Local database for data persistence
-- **Google Calendar API**: Google calendar integration
-- **Microsoft Graph API**: Microsoft calendar integration
+- **Node.js + TypeScript**: Base da aplicação
+- **LangChain/LangGraph**: Framework para agentes de IA
+- **OpenAI GPT-4o-mini**: Modelo de linguagem
+- **Blessed**: Interface rica para terminal
+- **Prisma ORM**: Mapeamento objeto-relacional
+- **SQLite**: Banco de dados local
+- **Zod**: Validação de esquemas TypeScript
+
+### Padrão de Arquitetura
+
+**Clean Architecture** com separação por domínios:
+- **Agent Layer**: Lógica do agente IA e ferramentas
+- **UI Layer**: Interface do usuário com Blessed
+- **Data Layer**: Persistência com Prisma + SQLite
+- **Domain Logic**: Use cases e entidades de negócio
 
 ## 🧪 Development
 

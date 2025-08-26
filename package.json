@@ -1,8 +1,11 @@
 {
-  "name": "nodejs-typescript-project",
+  "name": "claudia-ai",
   "version": "1.0.0",
-  "description": "A Node.js project with TypeScript and ESLint (Airbnb style)",
+  "description": "ClaudIA - Assistente inteligente de produtividade CLI com IA",
   "main": "dist/index.js",
+  "bin": {
+    "claudia": "./bin/claudia"
+  },
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
@@ -18,13 +21,18 @@
     "db:seed": "ts-node prisma/seed.ts"
   },
   "keywords": [
-    "nodejs",
+    "ai",
+    "assistant",
+    "productivity",
+    "cli",
     "typescript",
-    "eslint",
-    "airbnb"
+    "langchain",
+    "calendar",
+    "reminders",
+    "checkpoints"
   ],
-  "author": "",
-  "license": "ISC",
+  "author": "Jhonny",
+  "license": "MIT",
   "devDependencies": {
     "@types/blessed": "^0.1.25",
     "@types/node": "^24.3.0",
@@ -40,12 +48,16 @@
     "@googleapis/calendar": "^11.0.1",
     "@langchain/core": "^0.3.72",
     "@langchain/langgraph": "^0.4.6",
+    "@langchain/openai": "^0.6.9",
     "@microsoft/microsoft-graph-client": "^3.0.7",
     "@paralleldrive/cuid2": "^2.2.2",
     "@prisma/client": "^6.14.0",
     "blessed": "^0.1.81",
     "dotenv": "^17.2.1",
+    "i": "^0.3.7",
     "langchain": "^0.3.31",
+    "node-notifier": "^10.0.1",
+    "npm": "^11.5.2",
     "prisma": "^6.14.0",
     "zod": "^4.1.1"
   }

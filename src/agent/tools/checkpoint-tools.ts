@@ -7,6 +7,7 @@ import {
   findAllCheckpointsSinceToolSchema,
   findAllCheckpointsToolSchema
 } from "./checkpoint-schemas";
+import { logInfo, logError } from "../../utils/logger";
 
 import { CheckpointRepository } from "../../modules/checkpoint/domain/repositories/checkpoint-repository";
 import { PrismaCheckpointRepository } from "../../modules/checkpoint/infra/prisma-checkpoint-repository";
@@ -22,9 +23,25 @@ const checkpointRepository: CheckpointRepository = new PrismaCheckpointRepositor
 
 export const createCheckpointTool = tool(
   async (input) => {
-    const createCheckpoint = new CreateCheckpointUseCase(checkpointRepository);
-    const result = await createCheckpoint.execute(input as z.infer<typeof createCheckpointToolSchema>);
-    return result;
+    const typedInput = input as z.infer<typeof createCheckpointToolSchema>;
+    logInfo('CheckpointTool', 'Creating checkpoint via tool', { 
+      projectName: typedInput.projectName,
+      summaryLength: typedInput.summary.length
+    });
+    
+    try {
+      const createCheckpoint = new CreateCheckpointUseCase(checkpointRepository);
+      const result = await createCheckpoint.execute(typedInput);
+      
+      logInfo('CheckpointTool', 'Checkpoint created successfully via tool', { 
+        projectName: typedInput.projectName
+      });
+      
+      return result;
+    } catch (error) {
+      logError('CheckpointTool', 'Error creating checkpoint via tool', error as Error, typedInput);
+      throw error;
+    }
   },
   {
     name: "create_checkpoint",
@@ -35,9 +52,21 @@ export const createCheckpointTool = tool(
 
 export const findAllCheckpointsTool = tool(
   async () => {
-    const findAllCheckpoints = new FindAllCheckpointsUseCase(checkpointRepository);
-    const result = await findAllCheckpoints.execute();
-    return JSON.stringify(result, null, 2);
+    logInfo('CheckpointTool', 'Finding all checkpoints via tool');
+    
+    try {
+      const findAllCheckpoints = new FindAllCheckpointsUseCase(checkpointRepository);
+      const result = await findAllCheckpoints.execute();
+      
+      logInfo('CheckpointTool', 'All checkpoints found successfully via tool', { 
+        total: result.total 
+      });
+      
+      return JSON.stringify(result, null, 2);
+    } catch (error) {
+      logError('CheckpointTool', 'Error finding all checkpoints via tool', error as Error);
+      throw error;
+    }
   },
   {
     name: "find_all_checkpoints",
