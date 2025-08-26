@@ -15,10 +15,27 @@ import { CalendarService } from '../../modules/calendar/application/calendar-ser
 import { ProviderCalendarRepository } from '../../modules/calendar/infra/provider-calendar-repository';
 import { GoogleCalendarAdapter } from '../../modules/calendar/infra/google-calendar-adapter';
 import { MicrosoftCalendarAdapter } from '../../modules/calendar/infra/microsoft-calendar-adapter';
+import { formatInBrazilTimezone } from '../../utils/timezone';
+import { CalendarEvent, TimeSlot } from '../../types/calendar';
 
 const providers = [new GoogleCalendarAdapter(), new MicrosoftCalendarAdapter()];
 const calendarRepository: CalendarRepository = new ProviderCalendarRepository(providers);
 const calendarService = new CalendarService(calendarRepository);
+
+function formatEventTimes(events: CalendarEvent[]) {
+  return events.map((event) => ({
+    ...event,
+    startTime: formatInBrazilTimezone(event.startTime, "yyyy-MM-dd'T'HH:mm:ssXXX"),
+    endTime: formatInBrazilTimezone(event.endTime, "yyyy-MM-dd'T'HH:mm:ssXXX"),
+  }));
+}
+
+function formatSlotTimes(slots: TimeSlot[]) {
+  return slots.map((slot) => ({
+    start: formatInBrazilTimezone(slot.start, "yyyy-MM-dd'T'HH:mm:ssXXX"),
+    end: formatInBrazilTimezone(slot.end, "yyyy-MM-dd'T'HH:mm:ssXXX"),
+  }));
+}
 
 export const searchDayEventsTool = tool(
   async (input) => {
@@ -27,11 +44,12 @@ export const searchDayEventsTool = tool(
     
     try {
       const events = await calendarService.searchDayEvents(new Date(date));
-      logInfo('CalendarTool', 'Day events found successfully', { 
-        date, 
-        eventCount: events.length 
+      const formatted = formatEventTimes(events);
+      logInfo('CalendarTool', 'Day events found successfully', {
+        date,
+        eventCount: events.length
       });
-      return JSON.stringify(events, null, 2);
+      return JSON.stringify(formatted, null, 2);
     } catch (error) {
       logError('CalendarTool', 'Error searching day events via tool', error as Error, { date });
       throw error;
@@ -48,7 +66,8 @@ export const searchWeekEventsTool = tool(
   async (input) => {
     const { date } = input as z.infer<typeof searchWeekEventsSchema>;
     const events = await calendarService.searchWeekEvents(new Date(date));
-    return JSON.stringify(events, null, 2);
+    const formatted = formatEventTimes(events);
+    return JSON.stringify(formatted, null, 2);
   },
   {
     name: 'search_week_events',
@@ -61,7 +80,8 @@ export const searchMonthEventsTool = tool(
   async (input) => {
     const { month, year } = input as z.infer<typeof searchMonthEventsSchema>;
     const events = await calendarService.searchMonthEvents(new Date(year, month - 1, 1));
-    return JSON.stringify(events, null, 2);
+    const formatted = formatEventTimes(events);
+    return JSON.stringify(formatted, null, 2);
   },
   {
     name: 'search_month_events',
@@ -74,7 +94,8 @@ export const searchEventsByTimeTool = tool(
   async (input) => {
     const { start, end } = input as z.infer<typeof searchEventsByTimeSchema>;
     const events = await calendarService.searchEventsByTime(new Date(start), new Date(end));
-    return JSON.stringify(events, null, 2);
+    const formatted = formatEventTimes(events);
+    return JSON.stringify(formatted, null, 2);
   },
   {
     name: 'search_events_by_time',
@@ -101,7 +122,8 @@ export const findFreeTimeSlotsTool = tool(
   async (input) => {
     const { start, end } = input as z.infer<typeof findFreeTimeSlotsSchema>;
     const slots = await calendarService.findFreeTimeSlots(new Date(start), new Date(end));
-    return JSON.stringify(slots, null, 2);
+    const formatted = formatSlotTimes(slots);
+    return JSON.stringify(formatted, null, 2);
   },
   {
     name: 'find_free_time_slots',
