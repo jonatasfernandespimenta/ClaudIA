@@ -8,6 +8,7 @@ import {
   calculateTimeUsageSchema,
   findFreeTimeSlotsSchema,
 } from './calendar-schemas';
+import { logInfo, logError } from '../../utils/logger';
 
 import { CalendarRepository } from '../../modules/calendar/domain/calendar-repository.interface';
 import { PrismaCalendarRepository } from '../../modules/calendar/infra/prisma-calendar-repository';
@@ -21,8 +22,19 @@ const calendarService = new CalendarService(calendarRepository);
 export const searchDayEventsTool = tool(
   async (input) => {
     const { date } = input as z.infer<typeof searchDayEventsSchema>;
-    const events = await calendarService.searchDayEvents(new Date(date));
-    return JSON.stringify(events, null, 2);
+    logInfo('CalendarTool', 'Searching day events via tool', { date });
+    
+    try {
+      const events = await calendarService.searchDayEvents(new Date(date));
+      logInfo('CalendarTool', 'Day events found successfully', { 
+        date, 
+        eventCount: events.length 
+      });
+      return JSON.stringify(events, null, 2);
+    } catch (error) {
+      logError('CalendarTool', 'Error searching day events via tool', error as Error, { date });
+      throw error;
+    }
   },
   {
     name: 'search_day_events',
