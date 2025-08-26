@@ -56,11 +56,17 @@ async function main(): Promise<void> {
       }
     },
     scrollable: true,
-    alwaysScroll: true,
+    alwaysScroll: false, // Mudado para false para permitir scroll manual
+    mouse: true, // Habilita suporte ao mouse
+    keys: true, // Habilita navegação por teclado
+    vi: true, // Habilita navegação estilo vi (j/k para cima/baixo)
     scrollbar: {
       ch: '█',
       style: {
         bg: 'magenta'
+      },
+      track: {
+        bg: 'black'
       }
     },
     padding: {
@@ -114,7 +120,7 @@ async function main(): Promise<void> {
     left: 0,
     width: '100%',
     height: 1,
-    content: ' 🔤 Ctrl+C para sair | 📝 Enter para enviar | 🔄 Aguardando sua pergunta...',
+    content: ' 🔤 Ctrl+C sair | 📝 Enter enviar | Tab navegar | ⬆️⬇️ j/k scroll | Home/End înicio/fim | 🔄 Aguardando...',
     style: {
       fg: 'black',
       bg: 'white'
@@ -136,7 +142,80 @@ async function main(): Promise<void> {
   logInfo('UI', 'Displaying welcome message to user');
   chat.add('{center}{bold}{cyan-fg}🌟 Bem-vindo ao ClaudIA! 🌟{/cyan-fg}{/bold}{/center}');
   chat.add('{center}{green-fg}Faça qualquer pergunta e eu te ajudo! 😊{/green-fg}{/center}');
-  chat.add(''); // Linha em branco para espaçamento
+  chat.add('');
+  
+  // Instruções sobre navegação
+  chat.add('{bold}{magenta-fg}📚 Como navegar pelo chat:{/magenta-fg}{/bold}');
+  chat.add('  • {yellow-fg}Tab{/yellow-fg} - Alternar entre chat e input');
+  chat.add('  • {yellow-fg}↑↓ ou j/k{/yellow-fg} - Rolar para cima/baixo');
+  chat.add('  • {yellow-fg}Page Up/Down{/yellow-fg} - Rolar rapidamente');
+  chat.add('  • {yellow-fg}Home/End{/yellow-fg} - Ir para início/fim');
+  chat.add('  • {yellow-fg}Mouse{/yellow-fg} - Clique e scroll wheel');
+  chat.add('');
+  
+  // Role para baixo para mostrar as instruções mais recentes
+  chat.setScrollPerc(100);
+
+  // Controles de navegação e scroll
+  let chatFocused = false;
+  
+  // Função para alternar entre chat e input
+  const toggleFocus = () => {
+    if (chatFocused) {
+      input.focus();
+      chatFocused = false;
+      updateStatus('✏️ Modo digitação - Digite sua pergunta e pressione Enter');
+    } else {
+      chat.focus();
+      chatFocused = true;
+      updateStatus('📖 Modo leitura - Use ↑↓ ou j/k para navegar, Tab para voltar ao input');
+    }
+    screen.render();
+  };
+
+  // Tab para alternar entre chat e input
+  screen.key(['tab'], toggleFocus);
+  
+  // Escape para focar no input
+  screen.key(['escape'], () => {
+    input.focus();
+    chatFocused = false;
+    updateStatus('✏️ Retornando ao input - Digite sua pergunta');
+    screen.render();
+  });
+  
+  // Controles quando o chat está focado
+  chat.key(['up', 'k'], () => {
+    chat.scroll(-1);
+    screen.render();
+  });
+  
+  chat.key(['down', 'j'], () => {
+    chat.scroll(1);
+    screen.render();
+  });
+  
+  chat.key(['pageup'], () => {
+    chat.scroll(-10);
+    screen.render();
+  });
+  
+  chat.key(['pagedown'], () => {
+    chat.scroll(10);
+    screen.render();
+  });
+  
+  // Home vai para o início do chat
+  chat.key(['home', 'g'], () => {
+    chat.setScrollPerc(0);
+    screen.render();
+  });
+  
+  // End vai para o final do chat
+  chat.key(['end', 'G'], () => {
+    chat.setScrollPerc(100);
+    screen.render();
+  });
 
   screen.key(['C-c', 'q'], () => {
     logInfo('UI', 'User requested application exit');
@@ -166,6 +245,10 @@ async function main(): Promise<void> {
     // Formatação colorida para mensagem do usuário
     chat.add(`{bold}{blue-fg}👤 Você:{/blue-fg}{/bold} {white-fg}${question}{/white-fg}`);
     chat.add(''); // Linha em branco para espaçamento
+    
+    // Role para baixo após adicionar mensagem do usuário
+    chat.setScrollPerc(100);
+    
     updateStatus('🤔 ClaudIA está pensando...');
     screen.render();
     
@@ -181,17 +264,26 @@ async function main(): Promise<void> {
       // Formatação colorida para resposta da IA
       chat.add(`{bold}{green-fg}🤖 ClaudIA:{/green-fg}{/bold} {yellow-fg}${answer}{/yellow-fg}`);
       chat.add(''); // Linha em branco para espaçamento
+      
+      // Role para baixo após adicionar resposta da IA
+      chat.setScrollPerc(100);
+      
       updateStatus('✅ Resposta enviada! Digite sua próxima pergunta...');
     } catch (error) {
       logError('UI', 'Error occurred during agent interaction', error as Error, { question });
       
       chat.add(`{bold}{red-fg}❌ Erro:{/red-fg}{/bold} {red-fg}${(error as Error).message}{/red-fg}`);
       chat.add(''); // Linha em branco para espaçamento
+      
+      // Role para baixo após adicionar mensagem de erro
+      chat.setScrollPerc(100);
+      
       updateStatus('⚠️ Erro ocorreu! Tente novamente...');
     }
 
     screen.render();
     input.focus();
+    chatFocused = false; // Garantir que o input esteja focado após a resposta
   });
 
   input.focus();

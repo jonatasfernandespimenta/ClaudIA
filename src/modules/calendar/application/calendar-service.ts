@@ -2,6 +2,7 @@ import { CalendarRepository } from '../domain/calendar-repository.interface';
 import { CalendarEvent, TimeSlot } from '../../../types/calendar';
 import { calculateTimeUsage, findFreeTimeSlots } from './event-queries';
 import { logInfo, logError } from '../../../utils/logger';
+import { startOfDayBrazil, endOfDayBrazil } from '../../../utils/timezone';
 
 export class CalendarService {
   constructor(private repository: CalendarRepository) {
@@ -12,10 +13,25 @@ export class CalendarService {
     logInfo('CalendarService', 'Searching day events', { date: date.toISOString() });
     
     try {
-      const start = new Date(date);
-      start.setHours(0, 0, 0, 0);
-      const end = new Date(date);
-      end.setHours(23, 59, 59, 999);
+      // Para corrigir o problema de timezone, vamos tratar corretamente datas ISO strings
+      // que são interpretadas como UTC. Precisamos criar as datas no timezone local brasileiro.
+      let targetDate: Date;
+      
+      // Se a data parece ser uma data "date-only" (00:00:00.000Z), ajustamos para timezone local
+      if (date.getUTCHours() === 0 && date.getUTCMinutes() === 0 && date.getUTCSeconds() === 0 && date.getUTCMilliseconds() === 0) {
+        // Extrair componentes da data UTC e criar uma data local correspondente
+        const year = date.getUTCFullYear();
+        const month = date.getUTCMonth();
+        const day = date.getUTCDate();
+        targetDate = new Date(year, month, day);
+      } else {
+        // Se já tem horário, usar a data como está
+        targetDate = new Date(date);
+      }
+      
+      // Criar start e end do dia no timezone local
+      const start = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), 0, 0, 0, 0);
+      const end = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), 23, 59, 59, 999);
       
       const events = await this.repository.getEvents(start, end);
       

@@ -60,18 +60,27 @@ export class GoogleCalendarAdapter implements CalendarProvider {
         dateRange: `${startDate.toISOString()} - ${endDate.toISOString()}`
       });
       
-      const events = items.map((event) => ({
-        id: event.id || '',
-        title: event.summary || '',
-        description: event.description || undefined,
-        startTime: new Date(event.start?.dateTime || event.start?.date || ''),
-        endTime: new Date(event.end?.dateTime || event.end?.date || ''),
-        location: event.location || undefined,
-        attendees: event.attendees?.map((a) => a.email || '').filter(Boolean),
-        source: 'google' as 'google',
-        calendarId: event.organizer?.email || 'primary',
-        isAllDay: !!event.start?.date && !event.start?.dateTime,
-      }));
+      const events = items.map((event) => {
+        // Google Calendar já retorna datas no timezone correto
+        // Não precisamos converter novamente se já estamos no timezone brasileiro
+        const isAllDay = !!event.start?.date && !event.start?.dateTime;
+        
+        const startTime = new Date(event.start?.dateTime || event.start?.date || '');
+        const endTime = new Date(event.end?.dateTime || event.end?.date || '');
+        
+        return {
+          id: event.id || '',
+          title: event.summary || '',
+          description: event.description || undefined,
+          startTime,
+          endTime,
+          location: event.location || undefined,
+          attendees: event.attendees?.map((a) => a.email || '').filter(Boolean),
+          source: 'google' as 'google',
+          calendarId: event.organizer?.email || 'primary',
+          isAllDay,
+        };
+      });
       
       logInfo('GoogleCalendarAdapter', 'Google Calendar events processed successfully', {
         processedEventCount: events.length

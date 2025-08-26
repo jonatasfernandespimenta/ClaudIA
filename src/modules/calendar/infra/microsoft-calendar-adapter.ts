@@ -59,18 +59,25 @@ export class MicrosoftCalendarAdapter implements CalendarProvider {
         dateRange: `${startDate.toISOString()} - ${endDate.toISOString()}`
       });
       
-      const events = items.map((event: any) => ({
-        id: event.id,
-        title: event.subject || '',
-        description: event.body?.content || undefined,
-        startTime: new Date(event.start.dateTime),
-        endTime: new Date(event.end.dateTime),
-        location: event.location?.displayName || undefined,
-        attendees: event.attendees?.map((a: any) => a.emailAddress?.address || '').filter(Boolean),
-        source: 'microsoft' as 'microsoft',
-        calendarId: event.organizer?.emailAddress?.address || '',
-        isAllDay: event.isAllDay || false,
-      }));
+      const events = items.map((event: any) => {
+        // Microsoft Calendar - usar datas como vêm da API
+        // O Microsoft Graph já retorna no timezone correto
+        const startTime = new Date(event.start.dateTime);
+        const endTime = new Date(event.end.dateTime);
+        
+        return {
+          id: event.id,
+          title: event.subject || '',
+          description: event.body?.content || undefined,
+          startTime,
+          endTime,
+          location: event.location?.displayName || undefined,
+          attendees: event.attendees?.map((a: any) => a.emailAddress?.address || '').filter(Boolean),
+          source: 'microsoft' as 'microsoft',
+          calendarId: event.organizer?.emailAddress?.address || '',
+          isAllDay: event.isAllDay || false,
+        };
+      });
       
       logInfo('MicrosoftCalendarAdapter', 'Microsoft Calendar events processed successfully', {
         processedEventCount: events.length
