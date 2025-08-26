@@ -11,12 +11,13 @@ import {
 import { logInfo, logError } from '../../utils/logger';
 
 import { CalendarRepository } from '../../modules/calendar/domain/calendar-repository.interface';
-import { PrismaCalendarRepository } from '../../modules/calendar/infra/prisma-calendar-repository';
 import { CalendarService } from '../../modules/calendar/application/calendar-service';
-import { PrismaClient } from '@prisma/client';
+import { ProviderCalendarRepository } from '../../modules/calendar/infra/provider-calendar-repository';
+import { GoogleCalendarAdapter } from '../../modules/calendar/infra/google-calendar-adapter';
+import { MicrosoftCalendarAdapter } from '../../modules/calendar/infra/microsoft-calendar-adapter';
 
-const prisma = new PrismaClient();
-const calendarRepository: CalendarRepository = new PrismaCalendarRepository(prisma);
+const providers = [new GoogleCalendarAdapter(), new MicrosoftCalendarAdapter()];
+const calendarRepository: CalendarRepository = new ProviderCalendarRepository(providers);
 const calendarService = new CalendarService(calendarRepository);
 
 export const searchDayEventsTool = tool(

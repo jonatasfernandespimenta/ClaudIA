@@ -44,8 +44,10 @@ export class MicrosoftCalendarAdapter implements CalendarProvider {
         throw new Error('Client not authenticated');
       }
       
+      const userEmail = process.env.MS_GRAPH_USER_EMAIL;
+      const calendarPath = userEmail ? `/users/${userEmail}/calendarview` : '/me/calendarview';
       const res = await this.client
-        .api('/me/calendarview')
+        .api(calendarPath)
         .query({ startDateTime: startDate.toISOString(), endDateTime: endDate.toISOString() })
         .select('subject,body,start,end,location,attendees,isAllDay,organizer')
         .orderby('start/dateTime')
@@ -105,8 +107,10 @@ export class MicrosoftCalendarAdapter implements CalendarProvider {
         timeRange: `${start.toISOString()} - ${end.toISOString()}`
       });
       
-      const res = await this.client.api('/me/calendar/getschedule').post({
-        schedules: ['me'],
+      const userEmail = process.env.MS_GRAPH_USER_EMAIL;
+      const schedulePath = userEmail ? `/users/${userEmail}/calendar/getschedule` : '/me/calendar/getschedule';
+      const res = await this.client.api(schedulePath).post({
+        schedules: [userEmail || 'me'],
         startTime: { dateTime: start.toISOString(), timeZone: 'UTC' },
         endTime: { dateTime: end.toISOString(), timeZone: 'UTC' },
       });

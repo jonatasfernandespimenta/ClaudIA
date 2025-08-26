@@ -198,10 +198,14 @@ OPENAI_API_KEY=sua_chave_openai_aqui
 # Google Calendar (OPCIONAL)
 GOOGLE_CLIENT_ID=seu_google_client_id
 GOOGLE_CLIENT_SECRET=seu_google_client_secret
+GOOGLE_REDIRECT_URI=sua_google_redirect_uri
+GOOGLE_REFRESH_TOKEN=seu_google_refresh_token
 
 # Microsoft Graph (OPCIONAL)
 MICROSOFT_CLIENT_ID=seu_microsoft_client_id
 MICROSOFT_CLIENT_SECRET=seu_microsoft_client_secret
+MS_GRAPH_TOKEN=seu_ms_graph_token
+MS_GRAPH_USER_EMAIL=email_do_usuario_ms
 
 # Banco de Dados (gerado automaticamente)
 DATABASE_URL="file:./prisma/dev.db"
