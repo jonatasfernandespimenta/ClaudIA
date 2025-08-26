@@ -1,5 +1,5 @@
 import { Client } from '@microsoft/microsoft-graph-client';
-import { zonedTimeToUtc } from 'date-fns-tz';
+import { fromZonedTime } from 'date-fns-tz';
 import { CalendarProvider, CalendarEvent, TimeSlot } from '../../../types/calendar';
 import { logInfo, logError, logWarn } from '../../../utils/logger';
 
@@ -63,11 +63,11 @@ export class MicrosoftCalendarAdapter implements CalendarProvider {
       const events = items.map((event: any) => {
         // Microsoft Calendar retorna data/hora com fuso separado.
         // Converter explicitamente usando o timezone informado para evitar offsets incorretos.
-        const startTime = zonedTimeToUtc(
+        const startTime = fromZonedTime(
           event.start.dateTime,
           event.start.timeZone || 'UTC'
         );
-        const endTime = zonedTimeToUtc(
+        const endTime = fromZonedTime(
           event.end.dateTime,
           event.end.timeZone || 'UTC'
         );
