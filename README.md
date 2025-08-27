@@ -589,14 +589,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - 📧 Email: support@claudia.dev
 
 ## 🗺️ Roadmap
-
-- [ ] Voice input/output capabilities
-- [ ] Mobile app companion
-- [ ] Team collaboration features
 - [ ] Advanced AI scheduling optimization
 - [ ] Plugin system for extensibility
-- [ ] Cloud synchronization
-- [ ] Multi-language support
 - [ ] Slack/Teams integration
 
 ## 🙏 Acknowledgments
