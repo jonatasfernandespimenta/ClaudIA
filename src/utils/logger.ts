@@ -68,26 +68,6 @@ export class Logger {
     return logLine;
   }
 
-  private writeToConsole(entry: LogEntry): void {
-    if (!this.enableConsole) return;
-
-    const logLine = this.formatLogEntry(entry);
-    
-    switch (entry.level) {
-      case LogLevel.ERROR:
-        console.error(`\x1b[31m${logLine}\x1b[0m`); // Red
-        break;
-      case LogLevel.WARN:
-        console.warn(`\x1b[33m${logLine}\x1b[0m`); // Yellow
-        break;
-      case LogLevel.DEBUG:
-        console.debug(`\x1b[36m${logLine}\x1b[0m`); // Cyan
-        break;
-      default:
-        console.log(`\x1b[32m${logLine}\x1b[0m`); // Green
-    }
-  }
-
   private writeToFile(entry: LogEntry): void {
     if (!this.enableFile) return;
 

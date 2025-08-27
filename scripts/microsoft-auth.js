@@ -121,22 +121,23 @@ const server = http.createServer(async (req, res) => {
         try {
             // Troca o código pelo token
             // Para aplicações públicas, não enviamos o client_secret
-            const tokenData = CLIENT_SECRET ? 
-                querystring.stringify({
-                    client_id: CLIENT_ID,
-                    client_secret: CLIENT_SECRET,
-                    code: code,
-                    grant_type: 'authorization_code',
-                    redirect_uri: REDIRECT_URI,
-                    scope: SCOPES
-                }) :
-                querystring.stringify({
-                    client_id: CLIENT_ID,
-                    code: code,
-                    grant_type: 'authorization_code',
-                    redirect_uri: REDIRECT_URI,
-                    scope: SCOPES
-                });
+            const tokenParams = {
+                client_id: CLIENT_ID,
+                code: code,
+                grant_type: 'authorization_code',
+                redirect_uri: REDIRECT_URI,
+                scope: SCOPES
+            };
+            
+            // Só adiciona client_secret se for uma aplicação confidencial
+            if (CLIENT_SECRET) {
+                tokenParams.client_secret = CLIENT_SECRET;
+                console.log('🔐 Usando aplicação confidencial (com client_secret)');
+            } else {
+                console.log('🔓 Usando aplicação pública (sem client_secret)');
+            }
+            
+            const tokenData = querystring.stringify(tokenParams);
             
             const tokenOptions = {
                 hostname: 'login.microsoftonline.com',

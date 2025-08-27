@@ -1,4 +1,4 @@
-import { ConfidentialClientApplication, ClientCredentialRequest, RefreshTokenRequest, AuthenticationResult } from '@azure/msal-node';
+import { ConfidentialClientApplication, PublicClientApplication, ClientCredentialRequest, RefreshTokenRequest, AuthenticationResult } from '@azure/msal-node';
 import { logInfo, logError, logWarn } from '../utils/logger';
 import fs from 'fs';
 import path from 'path';
@@ -18,21 +18,34 @@ export interface TokenData {
 }
 
 export class MicrosoftTokenService {
-  private msalApp: ConfidentialClientApplication;
+  private msalApp: ConfidentialClientApplication | PublicClientApplication;
   private config: MicrosoftTokenConfig;
   private tokenCache: TokenData | null = null;
   private readonly TOKEN_BUFFER_TIME = 5 * 60 * 1000; // 5 minutos antes da expiração
+  private isPublicClient: boolean;
 
   constructor(config: MicrosoftTokenConfig) {
     this.config = config;
+    this.isPublicClient = !config.clientSecret;
     
-    this.msalApp = new ConfidentialClientApplication({
-      auth: {
-        clientId: config.clientId,
-        clientSecret: config.clientSecret,
-        authority: `https://login.microsoftonline.com/${config.tenantId}`,
-      }
-    });
+    if (this.isPublicClient) {
+      // Aplicação pública (sem client_secret)
+      this.msalApp = new PublicClientApplication({
+        auth: {
+          clientId: config.clientId,
+          authority: `https://login.microsoftonline.com/${config.tenantId}`,
+        }
+      });
+    } else {
+      // Aplicação confidencial (com client_secret)
+      this.msalApp = new ConfidentialClientApplication({
+        auth: {
+          clientId: config.clientId,
+          clientSecret: config.clientSecret,
+          authority: `https://login.microsoftonline.com/${config.tenantId}`,
+        }
+      });
+    }
 
     logInfo('MicrosoftTokenService', 'Initialized Microsoft Token Service', {
       clientId: config.clientId,
