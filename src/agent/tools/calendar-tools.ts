@@ -7,9 +7,11 @@ import {
   searchEventsByTimeSchema,
   calculateTimeUsageSchema,
   findFreeTimeSlotsSchema,
+  visualizeCalendarBoardSchema,
 } from './calendar-schemas';
 import { logInfo, logError } from '../../utils/logger';
 import { PremiumCalendarFormatter } from '../../utils/premium-calendar-formatter';
+import { CalendarBoardVisualizer } from '../../utils/calendar-board-visualizer';
 
 import { CalendarRepository } from '../../modules/calendar/domain/calendar-repository.interface';
 import { CalendarService } from '../../modules/calendar/application/calendar-service';
@@ -137,6 +139,75 @@ export const findFreeTimeSlotsTool = tool(
   },
 );
 
+export const visualizeCalendarBoardTool = tool(
+  async (input) => {
+    const params = input as z.infer<typeof visualizeCalendarBoardSchema>;
+    logInfo('CalendarTool', 'Visualizing calendar board via tool', {
+      startDate: params.startDate,
+      endDate: params.endDate,
+      title: params.title
+    });
+    
+    try {
+      // Buscar eventos no período especificado
+      const events = await calendarService.searchEventsByTime(
+        new Date(params.startDate), 
+        new Date(params.endDate)
+      );
+      
+      logInfo('CalendarTool', 'Calendar events retrieved for board visualization', {
+        eventCount: events.length,
+        dateRange: `${params.startDate} - ${params.endDate}`
+      });
+      
+      // Criar visualização board simplificada para o chat
+      const boardVisualization = CalendarBoardVisualizer.createSimpleCalendarBoardText(events, {
+        title: params.title,
+        showDescription: params.showDescription,
+        maxEventsPerDay: params.maxEventsPerDay,
+        startDate: new Date(params.startDate),
+        endDate: new Date(params.endDate)
+      });
+      
+      // Armazenar dados do board para modo visual (será usado pela UI)
+      (global as any).__CLAUDIA_CALENDAR_BOARD_DATA__ = {
+        events,
+        options: {
+          title: params.title || 'Reuniões',
+          showDescription: params.showDescription,
+          maxEventsPerDay: params.maxEventsPerDay,
+          startDate: new Date(params.startDate),
+          endDate: new Date(params.endDate)
+        }
+      };
+      
+      const result = {
+        success: true,
+        period: `${params.startDate} até ${params.endDate}`,
+        totalEvents: events.length,
+        visualization: boardVisualization,
+        visualMode: true // Flag para indicar que há dados para modo visual
+      };
+      
+      logInfo('CalendarTool', 'Calendar board visualization created successfully', {
+        totalEvents: events.length,
+        period: `${params.startDate} - ${params.endDate}`
+      });
+      
+      // Return com marcador especial para modo visual
+      return `🎯 **CALENDAR_BOARD_VISUAL_MODE** 🎯\n\n✅ **Visualização Board de Reuniões Criada!**\n\n${boardVisualization}\n\n📊 **Resumo:**\n- **Período:** ${params.startDate} até ${params.endDate}\n- **Total de Reuniões:** ${events.length}\n- **Título:** ${params.title || 'Reuniões'}\n\n{bold}{yellow-fg}💡 Pressione 'B' para abrir a visualização gráfica do calendário!{/yellow-fg}{/bold}`;
+    } catch (error) {
+      logError('CalendarTool', 'Error visualizing calendar board via tool', error as Error, params);
+      return `❌ **Erro ao visualizar reuniões em board:**\n\n${error instanceof Error ? error.message : 'Erro desconhecido'}`;
+    }
+  },
+  {
+    name: 'visualize_calendar_board',
+    description: 'Create a visual board representation of calendar events/meetings organized by day columns, showing title and source (Google/Microsoft) for each meeting card with clickable details',
+    schema: visualizeCalendarBoardSchema,
+  },
+);
+
 export const calendarTools = [
   searchDayEventsTool,
   searchWeekEventsTool,
@@ -144,4 +215,5 @@ export const calendarTools = [
   searchEventsByTimeTool,
   calculateTimeUsageTool,
   findFreeTimeSlotsTool,
+  visualizeCalendarBoardTool,
 ];

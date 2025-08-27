@@ -27,3 +27,11 @@ export const findFreeTimeSlotsSchema = z.object({
   start: z.string().describe('Start of range (ISO date string)'),
   end: z.string().describe('End of range (ISO date string)'),
 });
+
+export const visualizeCalendarBoardSchema = z.object({
+  startDate: z.string().describe('Start date for the period to visualize (ISO date string)'),
+  endDate: z.string().describe('End date for the period to visualize (ISO date string)'),
+  title: z.string().optional().describe('Optional custom title for the board'),
+  showDescription: z.boolean().optional().default(true).describe('Whether to show event descriptions'),
+  maxEventsPerDay: z.number().optional().default(8).describe('Maximum events to show per day column'),
+});

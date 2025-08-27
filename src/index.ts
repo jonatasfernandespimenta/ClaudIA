@@ -2,6 +2,7 @@ import blessed from 'blessed';
 import { askAgent } from './agent/agent';
 import { logInfo, logError, logWarn } from './utils/logger';
 import { BoardVisualizer } from './utils/board-visualizer';
+import { CalendarBoardVisualizer } from './utils/calendar-board-visualizer';
 import { Board } from './modules/board/domain/entities/board';
 import { Card } from './modules/board/domain/entities/card';
 
@@ -228,15 +229,84 @@ async function main(): Promise<void> {
     screen.render();
   });
 
+  // Função para abrir visualização de board de calendário
+  const openCalendarBoardVisualization = (calendarBoardData: any) => {
+    logInfo('UI', 'Opening calendar board visualization', { 
+      title: calendarBoardData.options.title,
+      eventCount: calendarBoardData.events.length 
+    });
+    
+    // Criar uma nova tela para o board de calendário
+    const calendarScreen = blessed.screen({
+      smartCSR: true,
+      title: `📅 ${calendarBoardData.options.title}`,
+      fullUnicode: true,
+    });
+
+    // Disponibilizar a tela globalmente para popups modais
+    (global as any).claudiaScreen = calendarScreen;
+    
+    // Criar visualização do board de calendário
+    const calendarContainer = CalendarBoardVisualizer.createCalendarBoardVisualization(
+      calendarBoardData.events,
+      {
+        width: calendarScreen.width as number,
+        height: (calendarScreen.height as number) - 2,
+        title: calendarBoardData.options.title,
+        showDescription: calendarBoardData.options.showDescription,
+        maxEventsPerDay: calendarBoardData.options.maxEventsPerDay,
+        startDate: calendarBoardData.options.startDate,
+        endDate: calendarBoardData.options.endDate
+      }
+    );
+
+    // Instrução de como fechar
+    const calendarInstructions = blessed.box({
+      bottom: 0,
+      left: 0,
+      width: '100%',
+      height: 1,
+      content: ' 🔤 Pressione ESC ou Q para voltar ao chat | ↑↓ Navegar | Mouse: clique nos cards para detalhes',
+      style: {
+        fg: 'black',
+        bg: 'white'
+      }
+    });
+
+    calendarScreen.append(calendarContainer);
+    calendarScreen.append(calendarInstructions);
+
+    // Eventos para fechar o board
+    calendarScreen.key(['escape', 'q'], () => {
+      logInfo('UI', 'Closing calendar board visualization');
+      // Limpar referência global
+      (global as any).claudiaScreen = null;
+      calendarScreen.destroy();
+      screen.render();
+      updateStatus('✅ Voltou ao chat! Digite sua próxima pergunta...');
+    });
+
+    calendarScreen.render();
+    updateStatus('📅 Visualização de reuniões aberta! Pressione ESC para voltar.');
+  };
+
   // Função para abrir visualização de board
   const openBoardVisualization = () => {
     const boardData = (global as any).__CLAUDIA_BOARD_DATA__;
+    const calendarBoardData = (global as any).__CLAUDIA_CALENDAR_BOARD_DATA__;
     
-    if (!boardData) {
-      updateStatus('⚠️ Nenhum board carregado! Execute primeiro um comando de visualização de board.');
+    // Verificar se há dados de board de projetos ou calendário
+    if (!boardData && !calendarBoardData) {
+      updateStatus('⚠️ Nenhum board carregado! Execute primeiro um comando de visualização de board ou calendário.');
       setTimeout(() => {
         updateStatus('✅ Resposta enviada! Digite sua próxima pergunta...');
       }, 3000);
+      return;
+    }
+    
+    // Priorizar board de calendário se ambos estiverem disponíveis
+    if (calendarBoardData) {
+      openCalendarBoardVisualization(calendarBoardData);
       return;
     }
 
