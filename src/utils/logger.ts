@@ -20,13 +20,11 @@ export interface LogEntry {
 export class Logger {
   private static instance: Logger;
   private logFilePath: string;
-  private enableConsole: boolean;
   private enableFile: boolean;
 
   private constructor() {
     this.logFilePath = path.join(process.cwd(), 'logs', 'claudia.log');
-    this.enableConsole = process.env.LOG_CONSOLE !== 'false';
-    this.enableFile = process.env.LOG_FILE !== 'false';
+    this.enableFile = process.env.LOG_FILE == 'true';
     
     // Cria o diretório de logs se não existir
     this.ensureLogDirectoryExists();
@@ -90,7 +88,6 @@ export class Logger {
       error
     };
 
-    // this.writeToConsole(entry);
     this.writeToFile(entry);
   }
 
