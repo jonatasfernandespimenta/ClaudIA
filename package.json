@@ -21,7 +21,8 @@
     "db:seed": "ts-node prisma/seed.ts",
     "auth:google": "node scripts/google-auth.js",
     "auth:google-simple": "node scripts/google-auth-simple.js",
-    "auth:microsoft": "node scripts/microsoft-auth.js"
+    "auth:microsoft": "node scripts/microsoft-auth.js",
+    "auth:microsoft:status": "node scripts/microsoft-token-status.js"
   },
   "keywords": [
     "ai",
@@ -48,6 +49,7 @@
     "typescript": "^5.9.2"
   },
   "dependencies": {
+    "@azure/msal-node": "^3.7.3",
     "@googleapis/calendar": "^11.0.1",
     "@langchain/core": "^0.3.72",
     "@langchain/langgraph": "^0.4.6",

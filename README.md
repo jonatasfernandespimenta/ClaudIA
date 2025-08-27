@@ -224,21 +224,226 @@ DATABASE_URL="file:./prisma/dev.db"
    OPENAI_API_KEY=sk-proj-...
    ```
 
-### Configuração de Calendários (Futuro)
+### 🔧 Configuração de Calendários
 
-#### Google Calendar
-1. Vá para o [Google Cloud Console](https://console.cloud.google.com/)
-2. Crie um novo projeto ou selecione um existente
-3. Ative a Google Calendar API
-4. Crie credenciais (OAuth 2.0 Client ID)
-5. Adicione as credenciais ao seu arquivo `.env`
+Para conectar seus calendários Google e Microsoft ao ClaudIA, você precisa criar aplicações nas respectivas plataformas e executar os comandos de autenticação.
 
-#### Microsoft Calendar
-1. Vá para o [Azure Portal](https://portal.azure.com/)
-2. Registre uma nova aplicação
-3. Configure permissões de API para Microsoft Graph
-4. Gere client secret
-5. Adicione as credenciais ao seu arquivo `.env`
+#### 📅 Google Calendar
+
+##### Passo 1: Criar Aplicação no Google Cloud Console
+
+1. **Acesse o Google Cloud Console**
+   - Vá para: https://console.cloud.google.com/
+   - Faça login com sua conta Google
+
+2. **Criar ou Selecionar Projeto**
+   - Clique no seletor de projetos no topo da página
+   - Clique em "Novo Projeto" ou selecione um projeto existente
+   - Nome sugerido: `ClaudIA Calendar Integration`
+
+3. **Ativar a Google Calendar API**
+   - No menu lateral, vá para "APIs e Serviços" > "Biblioteca"
+   - Pesquise por "Google Calendar API"
+   - Clique na API e depois em "Ativar"
+
+4. **Configurar Tela de Consentimento OAuth**
+   - Vá para "APIs e Serviços" > "Tela de consentimento OAuth"
+   - Escolha "Externo" (ou "Interno" se for conta corporativa)
+   - Preencha os campos obrigatórios:
+     - **Nome do app**: `ClaudIA`
+     - **E-mail de suporte do usuário**: seu email
+     - **E-mail de contato do desenvolvedor**: seu email
+   - Clique em "Salvar e Continuar"
+   - Em "Escopos", clique em "Adicionar ou remover escopos"
+   - Adicione o escopo: `https://www.googleapis.com/auth/calendar.readonly`
+   - Salve e continue até o fim
+
+5. **Criar Credenciais OAuth 2.0**
+   - Vá para "APIs e Serviços" > "Credenciais"
+   - Clique em "+ Criar Credenciais" > "ID do cliente OAuth 2.0"
+   - Tipo de aplicação: **Aplicação da Web**
+   - Nome: `ClaudIA Desktop Client`
+   - **URIs de redirecionamento autorizados**:
+     - `http://localhost:3000/auth/callback`
+     - `urn:ietf:wg:oauth:2.0:oob` (para modo simplificado)
+
+6. **Obter Credenciais**
+   - Após criar, copie o **Client ID** e **Client Secret**
+   - Adicione ao seu arquivo `.env`:
+   ```env
+   GOOGLE_CLIENT_ID=seu_client_id_aqui
+   GOOGLE_CLIENT_SECRET=seu_client_secret_aqui
+   GOOGLE_REDIRECT_URI=http://localhost:3000/auth/callback
+   ```
+
+##### Passo 2: Executar Autenticação
+
+```bash
+# Método 1: Com servidor local (recomendado)
+npm run auth:google
+
+# Método 2: Modo simplificado (manual)
+npm run auth:google-simple
+```
+
+**Método 1 (Servidor Local):**
+1. Execute o comando acima
+2. Abra o link que aparecer no terminal
+3. Faça login com sua conta Google
+4. Autorize as permissões
+5. Você será redirecionado automaticamente
+6. O refresh token será salvo no `.env`
+
+**Método 2 (Manual):**
+1. Execute o comando acima
+2. Copie e cole o URL no navegador
+3. Após autorizar, copie o código que aparecer
+4. Cole o código no terminal quando solicitado
+5. O refresh token será salvo no `.env`
+
+---
+
+#### 🏢 Microsoft Calendar (Office 365/Outlook)
+
+##### Passo 1: Registrar Aplicação no Azure AD
+
+1. **Acesse o Azure Portal**
+   - Vá para: https://portal.azure.com/
+   - Faça login com sua conta Microsoft/corporativa
+
+2. **Navegar até Azure Active Directory**
+   - No menu lateral, clique em "Azure Active Directory"
+   - Ou use a barra de pesquisa para encontrar
+
+3. **Criar Registro de Aplicativo**
+   - No menu do Azure AD, clique em "App registrations" (Registros de aplicativo)
+   - Clique em "+ New registration" (+ Novo registro)
+
+4. **Configurar o Registro**
+   - **Nome**: `ClaudIA Microsoft Graph Integration`
+   - **Tipos de conta com suporte**:
+     - Para contas pessoais: "Accounts in any organizational directory and personal Microsoft accounts"
+     - Para contas corporativas: "Accounts in this organizational directory only"
+   - **URI de Redirecionamento**:
+     - Tipo: **Web**
+     - URI: `http://localhost:3000/auth/microsoft/callback`
+   - Clique em "Registrar"
+
+5. **Obter Credenciais Básicas**
+   - Na página de visão geral da aplicação, copie:
+     - **Application (client) ID** → seu `MICROSOFT_CLIENT_ID`
+     - **Directory (tenant) ID** → seu `MICROSOFT_TENANT_ID` (opcional)
+
+6. **Criar Client Secret**
+   - Vá para "Certificates & secrets" (Certificados e segredos)
+   - Clique em "+ New client secret" (+ Novo segredo do cliente)
+   - Descrição: `ClaudIA Auth Secret`
+   - Expiração: 24 meses (recomendado)
+   - Clique em "Add"
+   - **⚠️ IMPORTANTE**: Copie o **Value** imediatamente! Não será mostrado novamente
+
+7. **Configurar Permissões da API**
+   - Vá para "API permissions" (Permissões de API)
+   - Clique em "+ Add a permission" (+ Adicionar uma permissão)
+   - Selecione "Microsoft Graph"
+   - Escolha "Delegated permissions" (Permissões delegadas)
+   - Adicione as seguintes permissões:
+     - `Calendars.ReadWrite` - Leitura e escrita de calendários
+     - `User.Read` - Leitura do perfil básico
+     - `Mail.Read` - Leitura de emails (opcional)
+     - `offline_access` - Acesso offline (refresh tokens)
+   - Clique em "Add permissions"
+   - **IMPORTANTE**: Clique em "Grant admin consent for [your organization]" se disponível
+
+8. **Adicionar Credenciais ao .env**
+   ```env
+   # Microsoft Graph (obrigatório)
+   MICROSOFT_CLIENT_ID=seu_client_id_aqui
+   MICROSOFT_CLIENT_SECRET=seu_client_secret_aqui
+   MICROSOFT_TENANT_ID=common
+   
+   # Opcional: email específico do usuário
+   MS_GRAPH_USER_EMAIL=seu_email@exemplo.com
+   ```
+
+##### Passo 2: Executar Autenticação
+
+```bash
+# Executar autenticação Microsoft
+npm run auth:microsoft
+
+# Verificar status dos tokens
+npm run auth:microsoft:status
+```
+
+**Processo de Autenticação:**
+1. Execute `npm run auth:microsoft`
+2. O comando abrirá automaticamente o navegador
+3. Faça login com sua conta Microsoft
+4. Autorize as permissões solicitadas
+5. Você será redirecionado para uma página de sucesso
+6. Os tokens serão automaticamente salvos no `.env`
+
+**Verificar Status:**
+```bash
+npm run auth:microsoft:status
+```
+
+Saída de exemplo:
+```
+📋 Configuração:
+   Client ID: ✅ Configurado
+   Client Secret: ✅ Configurado
+   Tenant ID: common
+
+🎫 Tokens:
+   Access Token: ✅ Disponível
+   Refresh Token: ✅ Disponível
+   Expira em: 27/08/2025, 12:39:05
+   ⏳ Tempo restante: 58 minuto(s)
+
+✅ Configuração básica OK
+✅ Renovação automática disponível
+```
+
+---
+
+#### 🔄 Renovação Automática de Tokens
+
+O ClaudIA possui um sistema inteligente de renovação automática:
+
+- **Google**: Refresh tokens são válidos indefinidamente (até serem revogados)
+- **Microsoft**: Tokens são renovados automaticamente 5 minutos antes de expirar
+- **Fallback**: Se a renovação falhar, usa o token atual temporariamente
+- **Logs**: Sistema fornece logs detalhados sobre renovações
+
+#### 🛠️ Comandos de Autenticação
+
+```bash
+# Google Calendar
+npm run auth:google           # Autenticação com servidor local
+npm run auth:google-simple     # Autenticação manual
+
+# Microsoft Calendar
+npm run auth:microsoft         # Autenticação Microsoft
+npm run auth:microsoft:status  # Verificar status dos tokens
+```
+
+#### ⚠️ Troubleshooting
+
+**Google Calendar:**
+- **Erro "redirect_uri_mismatch"**: Verifique se a URI de redirecionamento está correta no Google Cloud Console
+- **Erro "access_denied"**: Verifique se a Google Calendar API está ativada
+- **Token expirado**: Re-execute o comando de autenticação
+
+**Microsoft Calendar:**
+- **Erro "invalid_client"**: Verifique se CLIENT_ID e CLIENT_SECRET estão corretos
+- **Erro "insufficient_scope"**: Verifique se todas as permissões foram concedidas no Azure AD
+- **Token expirado**: Execute `npm run auth:microsoft:status` para verificar e `npm run auth:microsoft` para renovar
+
+**Geral:**
+- **"Missing environment variables"**: Verifique se todas as variáveis estão no arquivo `.env`
+- **Problema de rede**: Verifique se o localhost:3000 não está sendo usado por outra aplicação
 
 ## 🏢️ Arquitetura
 

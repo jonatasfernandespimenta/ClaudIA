@@ -12,7 +12,7 @@ const CLIENT_ID = process.env.MICROSOFT_CLIENT_ID;
 const CLIENT_SECRET = process.env.MICROSOFT_CLIENT_SECRET;
 const TENANT_ID = process.env.MICROSOFT_TENANT_ID || 'common';
 const REDIRECT_URI = 'http://localhost:3000/auth/microsoft/callback';
-const SCOPES = 'https://graph.microsoft.com/Mail.Read https://graph.microsoft.com/Mail.Send https://graph.microsoft.com/Calendars.ReadWrite https://graph.microsoft.com/User.Read';
+const SCOPES = 'https://graph.microsoft.com/Mail.Read https://graph.microsoft.com/Mail.Send https://graph.microsoft.com/Calendars.ReadWrite https://graph.microsoft.com/User.Read offline_access';
 
 // URLs da Microsoft
 const AUTHORIZE_URL = `https://login.microsoftonline.com/${TENANT_ID}/oauth2/v2.0/authorize`;
@@ -59,28 +59,38 @@ function makeHttpsRequest(options, postData = null) {
 }
 
 // Função para atualizar o arquivo .env
-function updateEnvFile(token, refreshToken = null) {
+function updateEnvFile(tokenResponse) {
     const envPath = path.join(__dirname, '..', '.env');
     let envContent = fs.readFileSync(envPath, 'utf8');
     
+    // Função auxiliar para atualizar ou adicionar variável
+    const updateEnvVar = (content, key, value) => {
+        const regex = new RegExp(`^${key}=.*$`, 'm');
+        if (regex.test(content)) {
+            return content.replace(regex, `${key}=${value}`);
+        } else {
+            return content + `\n${key}=${value}`;
+        }
+    };
+    
     // Atualiza o MS_GRAPH_TOKEN
-    if (envContent.includes('MS_GRAPH_TOKEN=')) {
-        envContent = envContent.replace(/MS_GRAPH_TOKEN=.*$/m, `MS_GRAPH_TOKEN=${token}`);
-    } else {
-        envContent += `\nMS_GRAPH_TOKEN=${token}`;
-    }
+    envContent = updateEnvVar(envContent, 'MS_GRAPH_TOKEN', tokenResponse.access_token);
     
     // Adiciona refresh token se fornecido
-    if (refreshToken) {
-        if (envContent.includes('MS_GRAPH_REFRESH_TOKEN=')) {
-            envContent = envContent.replace(/MS_GRAPH_REFRESH_TOKEN=.*$/m, `MS_GRAPH_REFRESH_TOKEN=${refreshToken}`);
-        } else {
-            envContent += `\nMS_GRAPH_REFRESH_TOKEN=${refreshToken}`;
-        }
+    if (tokenResponse.refresh_token) {
+        envContent = updateEnvVar(envContent, 'MS_GRAPH_REFRESH_TOKEN', tokenResponse.refresh_token);
     }
+    
+    // Adiciona timestamp de expiração
+    const expiresAt = Date.now() + (tokenResponse.expires_in * 1000);
+    envContent = updateEnvVar(envContent, 'MS_GRAPH_TOKEN_EXPIRES_AT', expiresAt.toString());
     
     fs.writeFileSync(envPath, envContent);
     console.log('✅ Arquivo .env atualizado com sucesso!');
+    
+    // Log das informações do token
+    console.log(`📅 Token expira em: ${new Date(expiresAt).toLocaleString()}`);
+    console.log(`🔄 Refresh token disponível: ${tokenResponse.refresh_token ? 'Sim' : 'Não'}`);
 }
 
 // Cria o servidor local para receber o callback
@@ -145,7 +155,7 @@ const server = http.createServer(async (req, res) => {
                 console.log(`📅 Válido por: ${tokenResponse.expires_in} segundos`);
                 
                 // Atualiza o arquivo .env
-                updateEnvFile(tokenResponse.access_token, tokenResponse.refresh_token);
+                updateEnvFile(tokenResponse);
                 
                 res.writeHead(200, { 'Content-Type': 'text/html' });
                 res.end(`

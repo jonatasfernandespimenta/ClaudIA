@@ -2,9 +2,11 @@ import { Client } from '@microsoft/microsoft-graph-client';
 import { fromZonedTime } from 'date-fns-tz';
 import { CalendarProvider, CalendarEvent, TimeSlot } from '../../../types/calendar';
 import { logInfo, logError, logWarn } from '../../../utils/logger';
+import { getMicrosoftTokenService } from '../../../services/microsoft-token-service';
 
 export class MicrosoftCalendarAdapter implements CalendarProvider {
   private client: Client | null = null;
+  private tokenService = getMicrosoftTokenService();
   
   constructor() {
     logInfo('MicrosoftCalendarAdapter', 'Initializing Microsoft Calendar adapter');
@@ -14,15 +16,16 @@ export class MicrosoftCalendarAdapter implements CalendarProvider {
     logInfo('MicrosoftCalendarAdapter', 'Starting Microsoft Graph authentication');
     
     try {
-      const token = process.env.MS_GRAPH_TOKEN;
-      if (!token) {
-        logError('MicrosoftCalendarAdapter', 'Missing MS_GRAPH_TOKEN environment variable');
-        throw new Error('Missing MS_GRAPH_TOKEN');
-      }
-      
+      // Usa o token service para obter um token válido (renovado automaticamente se necessário)
       this.client = Client.init({
-        authProvider: (done) => {
-          done(null, token);
+        authProvider: async (done) => {
+          try {
+            const token = await this.tokenService.getValidToken();
+            done(null, token);
+          } catch (error) {
+            logError('MicrosoftCalendarAdapter', 'Failed to get valid token', error as Error);
+            done(error as Error, null);
+          }
         },
       });
       
