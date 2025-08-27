@@ -13,19 +13,18 @@ import {
   MoveCardSchema,
   UpdateCardSchema,
   CreateCardSchema,
-  GetAdapterInfoSchema
+  GetAdapterInfoSchema,
+  VisualizeBoardSchema
 } from './board-schemas';
 import { logInfo, logError } from '../../utils/logger';
+import { BoardVisualizer } from '../../utils/board-visualizer';
 
-// Global instance - in a real app, this would be managed by DI container
 let boardServiceManager: BoardServiceManager | null = null;
 
 function getBoardServiceManager(): BoardServiceManager {
   if (!boardServiceManager) {
-    // Initialize with default configs - in a real app, this would come from environment/config
     const configs: AdapterConfig[] = [];
     
-    // Add Pipefy config if environment variables are present
     if (process.env.PIPEFY_API_KEY) {
       configs.push({
         type: 'pipefy',
@@ -34,7 +33,6 @@ function getBoardServiceManager(): BoardServiceManager {
       });
     }
     
-    // Add Shortcut config if environment variables are present
     if (process.env.SHORTCUT_API_KEY) {
       configs.push({
         type: 'shortcut',
@@ -139,7 +137,78 @@ export const getCardsFromAssigneeTool = tool(
   }
 );
 
+export const visualizeBoardTool = tool(
+  async (input) => {
+    const params = input as z.infer<typeof VisualizeBoardSchema>;
+    logInfo('BoardTool', 'Visualizing board via tool', { boardId: params.boardId, source: params.source });
+    
+    try {
+      const manager = getBoardServiceManager();
+      
+      // Get the board info
+      const board = await manager.getBoardById(params.boardId, { source: params.source });
+      
+      if (!board) {
+        return `❌ **Board não encontrado:**\n\nO board com ID ${params.boardId} não foi encontrado na fonte ${params.source}.`;
+      }
+      
+      // Get all cards from all phases of the board
+      const allCards: Card[] = [];
+      for (const phase of board.phases) {
+        try {
+          const phaseCards = await manager.getCardsFromPhase(params.boardId, phase, { source: params.source });
+          allCards.push(...phaseCards);
+        } catch (phaseError) {
+          logError('BoardTool', `Error getting cards from phase ${phase}`, phaseError as Error);
+          // Continue with other phases
+        }
+      }
+      
+      // Create visual board representation
+      const boardVisualization = BoardVisualizer.createSimpleBoardText(board, allCards);
+      
+      // Store board data for visual mode (will be used by the UI)
+      (global as any).__CLAUDIA_BOARD_DATA__ = {
+        board,
+        cards: allCards,
+        options: {
+          showAssignees: params.showAssignees,
+          maxCardsPerPhase: params.maxCardsPerPhase,
+          title: board.title
+        }
+      };
+      
+      const result = {
+        success: true,
+        boardId: params.boardId,
+        boardTitle: board.title,
+        totalCards: allCards.length,
+        visualization: boardVisualization,
+        source: params.source,
+        visualMode: true // Flag para indicar que há dados para modo visual
+      };
+      
+      logInfo('BoardTool', 'Board visualization created successfully via tool', {
+        boardId: params.boardId,
+        totalCards: allCards.length
+      });
+      
+      // Return the visualization with special marker for visual mode
+      return `🎯 **BOARD_VISUAL_MODE** 🎯\n\n✅ **Visualização do Board Criada com Sucesso!**\n\n${boardVisualization}\n\n📊 **Resumo:**\n- **Board:** ${board.title}\n- **Total de Cards:** ${allCards.length}\n- **Fases:** ${board.phases.length}\n- **Fonte:** ${params.source}\n\n{bold}{yellow-fg}💡 Pressione 'V' para abrir a visualização gráfica do board!{/yellow-fg}{/bold}`;
+    } catch (error) {
+      logError('BoardTool', 'Error visualizing board via tool', error as Error, params);
+      return `❌ **Erro ao visualizar o board:**\n\n${error instanceof Error ? error.message : 'Erro desconhecido'}`;
+    }
+  },
+  {
+    name: "visualize_board",
+    description: "Create a visual representation of a board showing all cards organized by phases/columns",
+    schema: VisualizeBoardSchema
+  }
+);
+
 export const boardTools = [
   getAllBoardsTool,
-  getCardsFromAssigneeTool
+  getCardsFromAssigneeTool,
+  visualizeBoardTool
 ];

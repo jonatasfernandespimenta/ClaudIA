@@ -60,3 +60,10 @@ export const CreateCardSchema = z.object({
 export const GetAdapterInfoSchema = z.object({
   type: z.enum(['pipefy', 'shortcut']).optional().describe('Specific adapter type to get info for, or all if not specified')
 });
+
+export const VisualizeBoardSchema = z.object({
+  boardId: z.string().describe('The board ID to visualize'),
+  source: BoardSourceSchema.describe('Source to get board from (pipefy, shortcut, or all)'),
+  showAssignees: z.boolean().optional().default(true).describe('Whether to show assignees in the cards'),
+  maxCardsPerPhase: z.number().optional().default(5).describe('Maximum number of cards to show per phase')
+});

@@ -1,6 +1,9 @@
 import blessed from 'blessed';
 import { askAgent } from './agent/agent';
 import { logInfo, logError, logWarn } from './utils/logger';
+import { BoardVisualizer } from './utils/board-visualizer';
+import { Board } from './modules/board/domain/entities/board';
+import { Card } from './modules/board/domain/entities/card';
 
 async function main(): Promise<void> {
   logInfo('UI', 'Starting ClaudIA application');
@@ -120,7 +123,7 @@ async function main(): Promise<void> {
     left: 0,
     width: '100%',
     height: 1,
-    content: ' 🔤 Ctrl+C sair | 📝 Enter enviar | Tab navegar | ⬆️⬇️ j/k scroll | Home/End înicio/fim | 🔄 Aguardando...',
+    content: ' 🔤 Ctrl+C sair | 📝 Enter enviar | Tab navegar | ⬆️⬇️ j/k scroll | V board | B board alternativo | 🔄 Aguardando...',
     style: {
       fg: 'black',
       bg: 'white'
@@ -147,10 +150,12 @@ async function main(): Promise<void> {
   // Instruções sobre navegação
   chat.add('{bold}{magenta-fg}📚 Como navegar pelo chat:{/magenta-fg}{/bold}');
   chat.add('  • {yellow-fg}Tab{/yellow-fg} - Alternar entre chat e input');
-  chat.add('  • {yellow-fg}↑↓ ou j/k{/yellow-fg} - Rolar para cima/baixo');
+  chat.add('  • {yellow-fg}↑↓ ou j/k{/yellow-fg} - Rolar para cima/baixo (quando chat focado)');
   chat.add('  • {yellow-fg}Page Up/Down{/yellow-fg} - Rolar rapidamente');
   chat.add('  • {yellow-fg}Home/End{/yellow-fg} - Ir para início/fim');
   chat.add('  • {yellow-fg}Mouse{/yellow-fg} - Clique e scroll wheel');
+  chat.add('  • {cyan-fg}V ou B{/cyan-fg} - Abrir visualização gráfica de board');
+  chat.add('  • {red-fg}Ctrl+C{/red-fg} - Sair da aplicação');
   chat.add('');
   
   // Role para baixo para mostrar as instruções mais recentes
@@ -173,8 +178,14 @@ async function main(): Promise<void> {
     screen.render();
   };
 
-  // Tab para alternar entre chat e input
+  // Múltiplas opções para alternar entre chat e input (compatibilidade macOS)
+  screen.key(['C-tab', 'M-tab'], toggleFocus);
+  
+  // Tab normal para alternar quando não está no input
   screen.key(['tab'], toggleFocus);
+  
+  // Adicionar também no input para garantir funcionamento
+  input.key(['C-tab', 'M-tab'], toggleFocus);
   
   // Escape para focar no input
   screen.key(['escape'], () => {
@@ -217,6 +228,86 @@ async function main(): Promise<void> {
     screen.render();
   });
 
+  // Função para abrir visualização de board
+  const openBoardVisualization = () => {
+    const boardData = (global as any).__CLAUDIA_BOARD_DATA__;
+    
+    if (!boardData) {
+      updateStatus('⚠️ Nenhum board carregado! Execute primeiro um comando de visualização de board.');
+      setTimeout(() => {
+        updateStatus('✅ Resposta enviada! Digite sua próxima pergunta...');
+      }, 3000);
+      return;
+    }
+
+    logInfo('UI', 'Opening board visualization', { boardTitle: boardData.board.title });
+    
+    // Criar uma nova tela para o board
+    const boardScreen = blessed.screen({
+      smartCSR: true,
+      title: `📋 Board: ${boardData.board.title}`,
+      fullUnicode: true,
+    });
+
+    // Disponibilizar a tela globalmente para popups modais
+    (global as any).claudiaScreen = boardScreen;
+    
+    // Criar visualização do board
+    const boardContainer = BoardVisualizer.createBoardVisualization(
+      boardData.board,
+      boardData.cards,
+      {
+        width: boardScreen.width as number,
+        height: (boardScreen.height as number) - 2,
+        title: boardData.board.title,
+        showAssignees: boardData.options.showAssignees,
+        maxCardsPerPhase: boardData.options.maxCardsPerPhase
+      }
+    );
+
+    // Instrução de como fechar
+    const boardInstructions = blessed.box({
+      bottom: 0,
+      left: 0,
+      width: '100%',
+      height: 1,
+      content: ' 🔤 Pressione ESC ou Q para voltar ao chat | ↑↓ Navegar | Mouse: clique e scroll',
+      style: {
+        fg: 'black',
+        bg: 'white'
+      }
+    });
+
+    boardScreen.append(boardContainer);
+    boardScreen.append(boardInstructions);
+
+    // Eventos para fechar o board
+    boardScreen.key(['escape', 'q'], () => {
+      logInfo('UI', 'Closing board visualization');
+      // Limpar referência global
+      (global as any).claudiaScreen = null;
+      boardScreen.destroy();
+      screen.render();
+      updateStatus('✅ Voltou ao chat! Digite sua próxima pergunta...');
+    });
+
+    boardScreen.render();
+    updateStatus('📋 Visualização de board aberta! Pressione ESC para voltar.');
+  };
+
+  // Múltiplas opções para visualizar board (compatibilidade macOS)
+  screen.key(['C-v', 'M-v'], openBoardVisualization);
+  
+  // V e B normal para abrir quando não está no input
+  screen.key(['v', 'V', 'b', 'B'], openBoardVisualization);
+  
+  // Adicionar também no input para garantir funcionamento
+  input.key(['C-v', 'M-v'], openBoardVisualization);
+  
+  // Atalho B também funciona no input (mais fácil de usar)
+  input.key(['C-b'], openBoardVisualization);
+
+  // CTRL+C e Q para sair da aplicação
   screen.key(['C-c', 'q'], () => {
     logInfo('UI', 'User requested application exit');
     updateStatus('🔄 Encerrando aplicação...');
@@ -224,6 +315,41 @@ async function main(): Promise<void> {
       logInfo('UI', 'ClaudIA application shutting down');
       process.exit(0);
     }, 500);
+  });
+  
+  // Garantir que CTRL+C funcione sempre, mesmo com input focado
+  input.key(['C-c'], () => {
+    logInfo('UI', 'User requested application exit via input');
+    updateStatus('🔄 Encerrando aplicação...');
+    setTimeout(() => {
+      logInfo('UI', 'ClaudIA application shutting down');
+      process.exit(0);
+    }, 500);
+  });
+  
+  // Debug temporário - capturar todos os eventos de teclado para identificar o problema
+  screen.on('keypress', (ch: any, key: any) => {
+    if (key?.ctrl || key?.meta || key?.shift) {
+      logInfo('UI', 'Key event captured', { 
+        name: key.name, 
+        ctrl: key.ctrl, 
+        meta: key.meta, 
+        shift: key.shift,
+        full: key.full 
+      });
+    }
+  });
+  
+  input.on('keypress', (ch: any, key: any) => {
+    if (key?.ctrl || key?.meta || key?.shift) {
+      logInfo('UI', 'Input key event captured', { 
+        name: key.name, 
+        ctrl: key.ctrl, 
+        meta: key.meta, 
+        shift: key.shift,
+        full: key.full 
+      });
+    }
   });
 
   input.on('submit', async (value: string) => {

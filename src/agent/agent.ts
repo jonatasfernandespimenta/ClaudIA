@@ -1,7 +1,7 @@
 import { createReactAgent } from '@langchain/langgraph/prebuilt';
 import { ChatOpenAI } from '@langchain/openai';
 import { tools } from './tool-inventory';
-import { SYSTEM_PROMPT } from './prompts';
+import { getPersonalizedPrompt } from './prompts';
 import { logInfo, logError, logWarn } from '../utils/logger';
 
 logInfo('Agent', 'Initializing OpenAI ChatGPT model', { model: 'gpt-4o-mini' });
@@ -23,10 +23,19 @@ type Message = {
   content: string;
 };
 
+// Carregar o nome do usuário do .env e personalizar o prompt
+const userName = process.env.USER_NAME;
+const personalizedPrompt = getPersonalizedPrompt(userName);
+
+logInfo('Agent', 'Loading user configuration', { 
+  hasUserName: !!userName, 
+  userName: userName ? `${userName.charAt(0)}***` : 'not set' // Log parcialmente por privacidade
+});
+
 const messages: Message[] = [
   {
     role: 'system',
-    content: SYSTEM_PROMPT,
+    content: personalizedPrompt,
   },
 ];
 

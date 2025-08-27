@@ -9,6 +9,7 @@ import {
   findFreeTimeSlotsSchema,
 } from './calendar-schemas';
 import { logInfo, logError } from '../../utils/logger';
+import { PremiumCalendarFormatter } from '../../utils/premium-calendar-formatter';
 
 import { CalendarRepository } from '../../modules/calendar/domain/calendar-repository.interface';
 import { CalendarService } from '../../modules/calendar/application/calendar-service';
@@ -44,12 +45,14 @@ export const searchDayEventsTool = tool(
     
     try {
       const events = await calendarService.searchDayEvents(new Date(date));
-      const formatted = formatEventTimes(events);
       logInfo('CalendarTool', 'Day events found successfully', {
         date,
         eventCount: events.length
       });
-      return JSON.stringify(formatted, null, 2);
+      
+      // Usar formatador premium para display elegante
+      const premiumDisplay = PremiumCalendarFormatter.formatDayEvents(events, new Date(date));
+      return premiumDisplay;
     } catch (error) {
       logError('CalendarTool', 'Error searching day events via tool', error as Error, { date });
       throw error;
@@ -57,7 +60,7 @@ export const searchDayEventsTool = tool(
   },
   {
     name: 'search_day_events',
-    description: 'Search and retrieve calendar events for a specific day, returning complete event information including exact titles, times, descriptions, locations, and attendees from Google Calendar, Microsoft Calendar, or other connected sources',
+    description: 'Search and retrieve calendar events for a specific day, returning complete event information including exact titles, times, descriptions, locations, and attendees from Google Calendar, Microsoft Calendar, or other connected sources with premium visual formatting',
     schema: searchDayEventsSchema,
   },
 );
@@ -66,12 +69,14 @@ export const searchWeekEventsTool = tool(
   async (input) => {
     const { date } = input as z.infer<typeof searchWeekEventsSchema>;
     const events = await calendarService.searchWeekEvents(new Date(date));
-    const formatted = formatEventTimes(events);
-    return JSON.stringify(formatted, null, 2);
+    
+    // Usar formatador premium para display elegante
+    const premiumDisplay = PremiumCalendarFormatter.formatWeekEvents(events);
+    return premiumDisplay;
   },
   {
     name: 'search_week_events',
-    description: 'Search and retrieve calendar events for an entire week, returning complete event information including exact titles, times, descriptions, locations, and attendees from all connected calendar sources',
+    description: 'Search and retrieve calendar events for an entire week, returning complete event information including exact titles, times, descriptions, locations, and attendees from all connected calendar sources with premium visual formatting',
     schema: searchWeekEventsSchema,
   },
 );

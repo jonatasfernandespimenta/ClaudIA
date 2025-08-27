@@ -28,6 +28,15 @@ interface ShortcutStory {
   updated_at: string;
 }
 
+interface ShortcutMember {
+  id: number;
+  profile?: {
+    name?: string;
+    mention_name?: string;
+    email_address?: string;
+  };
+}
+
 export class ShortcutAdapter implements BoardAdapter {
   private readonly baseUrl = "https://api.app.shortcut.com/api/v3";
   private readonly apiKey: string;
@@ -98,23 +107,55 @@ export class ShortcutAdapter implements BoardAdapter {
       throw new Error(`Phase '${phase}' not found in workflow ${boardId}`);
     }
 
-    const stories = await this.makeRequest<ShortcutStory[]>(`/stories?workflow_state_id=${state.id}`);
+    // Use search endpoint to find stories by state
+    const searchQuery = `state:"${phase}"`;
+    const searchResult = await this.makeRequest<any>(`/search?query=${encodeURIComponent(searchQuery)}`);
     
-    return stories.map(story => this.mapStoryToCard(story, phase));
+    const stories = searchResult.stories?.data || [];
+    
+    return stories.map((story: any) => this.mapStoryToCard(story, phase));
   }
 
   async getCardsFromAssignee(assignee: string): Promise<Card[]> {
-    // In Shortcut, we need to search by owner_id
-    // This assumes assignee is a user ID - in a real implementation, 
-    // you might need to resolve username to ID first
-    const stories = await this.makeRequest<ShortcutStory[]>(`/stories?owner_id=${assignee}`);
-    
-    const cardsPromises = stories.map(async (story) => {
-      const stateName = await this.getStateNameById(story.workflow_state_id);
-      return this.mapStoryToCard(story, stateName);
-    });
+    try {
+      // First, try to find the user by name/email to get their mention_name
+      const members = await this.makeRequest<ShortcutMember[]>('/members');
+      let targetMentionName: string | null = null;
+      
+      // Look for user by name (case insensitive), mention name, or email
+      const member = members.find(member => 
+        member.profile?.name?.toLowerCase().includes(assignee.toLowerCase()) ||
+        member.profile?.mention_name?.toLowerCase() === assignee.toLowerCase() ||
+        member.profile?.mention_name?.toLowerCase().includes(assignee.toLowerCase()) ||
+        member.profile?.email_address?.toLowerCase().includes(assignee.toLowerCase())
+      );
+      
+      if (member) {
+        targetMentionName = member.profile?.mention_name || null;
+      } else {
+        // If no member found by name, assume the assignee is already a mention name
+        targetMentionName = assignee;
+      }
+      
+      if (!targetMentionName) {
+        throw new Error(`User '${assignee}' not found in workspace`);
+      }
+      
+      // Use search endpoint to find stories by owner mention name
+      const searchQuery = `owner:${targetMentionName}`;
+      const searchResult = await this.makeRequest<any>(`/search?query=${encodeURIComponent(searchQuery)}`);
+      
+      const stories = searchResult.stories?.data || [];
+      
+      const cardsPromises = stories.map(async (story: any) => {
+        const stateName = await this.getStateNameById(story.workflow_state_id);
+        return this.mapStoryToCard(story, stateName);
+      });
 
-    return Promise.all(cardsPromises);
+      return Promise.all(cardsPromises);
+    } catch (error) {
+      throw new Error(`Failed to get cards from Shortcut for assignee ${assignee}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   }
 
   async moveCard(cardId: string, newPhase: string): Promise<Card> {
