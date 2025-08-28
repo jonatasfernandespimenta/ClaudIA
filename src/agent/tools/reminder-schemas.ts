@@ -27,3 +27,11 @@ export const findAllRemindersSinceToolSchema = z.object({
 
 // Schema for find-all-reminders (no input needed)
 export const findAllRemindersToolSchema = z.object({});
+
+export const visualizeRemindersBoardToolSchema = z.object({
+  title: z.string().optional().describe("Optional title for the reminders board"),
+  showDates: z.boolean().optional().describe("Whether to show creation dates on cards"),
+  maxRemindersPerColumn: z.number().optional().describe("Maximum number of reminders per column"),
+  width: z.number().optional().describe("Width of the board container"),
+  height: z.number().optional().describe("Height of the board container")
+});

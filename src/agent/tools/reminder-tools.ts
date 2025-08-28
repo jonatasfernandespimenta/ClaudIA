@@ -6,9 +6,11 @@ import {
   findRemindersByStatusToolSchema,
   updateReminderStatusToolSchema,
   findAllRemindersSinceToolSchema,
-  findAllRemindersToolSchema
+  findAllRemindersToolSchema,
+  visualizeRemindersBoardToolSchema
 } from "./reminder-schemas";
 import { logInfo, logError } from "../../utils/logger";
+import { ReminderBoardVisualizer } from "../../utils/reminder-board-visualizer";
 
 import { ReminderRepository } from "../../modules/reminder/domain/repositories/reminder-repository";
 import { PrismaReminderRepository } from "../../modules/reminder/infra/prisma-reminder-repository";
@@ -141,11 +143,89 @@ export const findAllRemindersSinceTool = tool(
   }
 );
 
+export const visualizeRemindersBoardTool = tool(
+  async (input) => {
+    const params = input as z.infer<typeof visualizeRemindersBoardToolSchema>;
+    logInfo('ReminderTool', 'Creating board visualization for reminders', {
+      title: params.title,
+      showDates: params.showDates,
+      maxRemindersPerColumn: params.maxRemindersPerColumn
+    });
+    
+    try {
+      // Buscar todos os reminders
+      const findAllReminders = new FindAllRemindersUseCase(reminderRepository);
+      const result = await findAllReminders.execute();
+      
+      // Converter strings de volta para objetos Reminder
+      const reminderObjects = result.reminders.map(reminderStr => {
+        const match = reminderStr.match(/Reminder \[id=([^,]+), message=([^,]+), status=([^,]+), createdAt=([^,]+), updatedAt=([^\]]+)\]/);
+        if (!match) return null;
+        
+        const [, id, message, status, createdAt, updatedAt] = match;
+        return {
+          id,
+          message,
+          status: status as any,
+          createdAt: new Date(createdAt),
+          updatedAt: new Date(updatedAt)
+        };
+      }).filter(Boolean) as any[];
+      
+      logInfo('ReminderTool', 'Reminders retrieved for board visualization', {
+        reminderCount: reminderObjects.length
+      });
+      
+      // Criar visualização board simplificada para o chat
+      const boardVisualization = ReminderBoardVisualizer.createSimpleReminderBoardText(reminderObjects, {
+        title: params.title || 'Reminders',
+        showDates: params.showDates !== false,
+        maxRemindersPerColumn: params.maxRemindersPerColumn || 8
+      });
+      
+      // Armazenar dados para modo visual (será usado pela UI)
+      (global as any).__CLAUDIA_REMINDERS_BOARD_DATA__ = {
+        reminders: reminderObjects,
+        options: {
+          title: params.title || 'Reminders',
+          showDates: params.showDates !== false,
+          maxRemindersPerColumn: params.maxRemindersPerColumn || 8,
+          width: params.width || 120,
+          height: params.height || 30
+        }
+      };
+      
+      const result_data = {
+        success: true,
+        totalReminders: reminderObjects.length,
+        visualization: boardVisualization,
+        visualMode: true // Flag para indicar que há dados para modo visual
+      };
+      
+      logInfo('ReminderTool', 'Board visualization created successfully', {
+        totalReminders: reminderObjects.length
+      });
+      
+      // Return com marcador especial para modo visual
+      return `🎯 **REMINDER_BOARD_VISUAL_MODE** 🎯\n\n✅ **Visualização Board de Reminders Criada!**\n\n${boardVisualization}\n\n📊 **Resumo:**\n- **Total de Reminders:** ${reminderObjects.length}\n- **Título:** ${params.title || 'Reminders'}\n- **Organização:** Colunas por status com cards interativos\n\n💡 **Pressione 'R' para abrir a visualização gráfica do board de reminders!**`;
+    } catch (error) {
+      logError('ReminderTool', 'Error creating board visualization', error as Error, params);
+      return `❌ **Erro ao visualizar reminders em board:**\n\n${error instanceof Error ? error.message : 'Erro desconhecido'}`;
+    }
+  },
+  {
+    name: "visualize_reminders_board",
+    description: "Create a visual board representation of reminders organized by status columns (Pending, In Progress, Completed, Cancelled), showing each reminder as a card with message, date, and ID",
+    schema: visualizeRemindersBoardToolSchema
+  }
+);
+
 export const reminderTools = [
   createReminderTool,
   findAllRemindersTool,
   findReminderByIdTool,
   findRemindersByStatusTool,
   updateReminderStatusTool,
-  findAllRemindersSinceTool
+  findAllRemindersSinceTool,
+  visualizeRemindersBoardTool
 ];

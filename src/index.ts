@@ -3,6 +3,7 @@ import { askAgent } from './agent/agent';
 import { logInfo, logError, logWarn } from './utils/logger';
 import { BoardVisualizer } from './utils/board-visualizer';
 import { CalendarBoardVisualizer } from './utils/calendar-board-visualizer';
+import { ReminderBoardVisualizer } from './utils/reminder-board-visualizer';
 import { Board } from './modules/board/domain/entities/board';
 import { Card } from './modules/board/domain/entities/card';
 
@@ -290,21 +291,86 @@ async function main(): Promise<void> {
     updateStatus('📅 Visualização de reuniões aberta! Pressione ESC para voltar.');
   };
 
+  // Função para abrir visualização de board de reminders
+  const openRemindersBoardVisualization = (remindersBoardData: any) => {
+    logInfo('UI', 'Opening reminders board visualization', { 
+      title: remindersBoardData.options.title,
+      reminderCount: remindersBoardData.reminders.length 
+    });
+    
+    // Criar uma nova tela para o board de reminders
+    const remindersScreen = blessed.screen({
+      smartCSR: true,
+      title: `📝 ${remindersBoardData.options.title}`,
+      fullUnicode: true,
+    });
+
+    // Disponibilizar a tela globalmente para popups modais
+    (global as any).claudiaScreen = remindersScreen;
+    
+    // Criar visualização do board de reminders
+    const remindersContainer = ReminderBoardVisualizer.createReminderBoardVisualization(
+      remindersBoardData.reminders,
+      {
+        width: remindersScreen.width as number,
+        height: (remindersScreen.height as number) - 2,
+        title: remindersBoardData.options.title,
+        showDates: remindersBoardData.options.showDates,
+        maxRemindersPerColumn: remindersBoardData.options.maxRemindersPerColumn
+      }
+    );
+
+    // Instrução de como fechar
+    const remindersInstructions = blessed.box({
+      bottom: 0,
+      left: 0,
+      width: '100%',
+      height: 1,
+      content: ' 🔤 Pressione ESC ou Q para voltar ao chat | ↑↓ Navegar | Mouse: clique nos cards para detalhes',
+      style: {
+        fg: 'black',
+        bg: 'white'
+      }
+    });
+
+    remindersScreen.append(remindersContainer);
+    remindersScreen.append(remindersInstructions);
+
+    // Eventos para fechar o board
+    remindersScreen.key(['escape', 'q'], () => {
+      logInfo('UI', 'Closing reminders board visualization');
+      // Limpar referência global
+      (global as any).claudiaScreen = null;
+      remindersScreen.destroy();
+      screen.render();
+      updateStatus('✅ Voltou ao chat! Digite sua próxima pergunta...');
+    });
+
+    remindersScreen.render();
+    updateStatus('📝 Visualização de reminders aberta! Pressione ESC para voltar.');
+  };
+
   // Função para abrir visualização de board
   const openBoardVisualization = () => {
     const boardData = (global as any).__CLAUDIA_BOARD_DATA__;
     const calendarBoardData = (global as any).__CLAUDIA_CALENDAR_BOARD_DATA__;
+    const remindersBoardData = (global as any).__CLAUDIA_REMINDERS_BOARD_DATA__;
     
-    // Verificar se há dados de board de projetos ou calendário
-    if (!boardData && !calendarBoardData) {
-      updateStatus('⚠️ Nenhum board carregado! Execute primeiro um comando de visualização de board ou calendário.');
+    // Verificar se há dados de board de projetos, calendário ou reminders
+    if (!boardData && !calendarBoardData && !remindersBoardData) {
+      updateStatus('⚠️ Nenhum board carregado! Execute primeiro um comando de visualização de board, calendário ou reminders.');
       setTimeout(() => {
         updateStatus('✅ Resposta enviada! Digite sua próxima pergunta...');
       }, 3000);
       return;
     }
     
-    // Priorizar board de calendário se ambos estiverem disponíveis
+    // Prioridade: reminders > calendário > projetos
+    if (remindersBoardData) {
+      openRemindersBoardVisualization(remindersBoardData);
+      return;
+    }
+    
     if (calendarBoardData) {
       openCalendarBoardVisualization(calendarBoardData);
       return;
