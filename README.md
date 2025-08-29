@@ -12,6 +12,9 @@
 
 ClaudIA é um assistente inteligente de produtividade executado via linha de comando (CLI) que combina o poder da Inteligência Artificial com uma interface terminal interativa e elegante. Construído com Node.js, TypeScript e potencializado pelo LangChain/LangGraph, o ClaudIA oferece uma experiência conversacional natural para gerenciar sua produtividade através de lembretes, checkpoints de projetos e integração com calendários.
 
+![Tela Principal do ClaudIA](readme_stuff/home_screen.png)
+*Interface principal do ClaudIA com chat conversacional*
+
 ## ✨ Funcionalidades
 
 ### 🤖 Agente com IA
@@ -26,6 +29,9 @@ ClaudIA é um assistente inteligente de produtividade executado via linha de com
 - **Histórico Completo**: Visualize todo o progresso dos seus projetos
 - **Organização por Projeto**: Agrupe checkpoints por nome do projeto
 
+![Visualização Board](readme_stuff/board_view.png)
+*Visualização de quadro com organização dos projetos*
+
 ### ⏰ Sistema de Lembretes
 - **Lembretes Personalizados**: Crie lembretes com mensagens personalizadas
 - **Gerenciamento de Status**: Controle o status (PENDING, IN_PROGRESS, COMPLETED, CANCELLED)
@@ -38,11 +44,22 @@ ClaudIA é um assistente inteligente de produtividade executado via linha de com
 - **Busca de Eventos**: Recupere eventos para dias, semanas ou períodos personalizados
 - **Análise de Tempo**: Calcule uso do tempo e identifique slots livres
 
+![Visualização de Calendário](readme_stuff/calendar_view.png)
+*Interface de calendário integrada para gerenciamento de eventos*
+
 ### 🖥️ Interface Terminal Elegante
 - **Blessed UI**: Interface rica e interativa no terminal
 - **Design Responsivo**: Adapta-se a diferentes tamanhos de terminal
 - **Navegação por Teclado**: Atalhos de teclado completos
 - **Multiplataforma**: Funciona em macOS, Linux e Windows
+
+<div align="center">
+  <img src="readme_stuff/card_board_view.png" alt="Vista em Cards" width="45%">
+  <img src="readme_stuff/tasks_from_board.png" alt="Lista de Tarefas" width="45%">
+</div>
+<div align="center">
+  <em>Diferentes visualizações: Cards organizados e lista detalhada de tarefas</em>
+</div>
 
 ## 🚀 Instalação
 
@@ -157,6 +174,9 @@ Após executar o comando `claudia`, você entrará no modo interativo onde pode 
    - Lembrete: Revisar o código do backend
    - Status alterado para: IN_PROGRESS
 ```
+
+![Detalhes de Reunião](readme_stuff/meeting_details.png)
+*Exemplo de visualização detalhada de eventos e tarefas relacionadas*
 
 ### Funcionalidades Disponíveis via Conversa
 
