@@ -559,15 +559,14 @@ npm run package
 
 ## 📚 API Reference
 
-### Agent Commands
+### Comandos Conversacionais
 
-| Command | Description | Example |
-|---------|-------------|---------|
-| `remind` | Create a reminder | `remind "Call mom" --time "tomorrow 5pm"` |
-| `checkpoint` | Create a checkpoint | `checkpoint "Phase 1 complete"` |
-| `agenda` | View calendar events | `agenda today`, `agenda "next week"` |
-| `todo` | Manage TODO lists | `todo add "Buy groceries"` |
-| `help` | Show available commands | `help` |
+| Funcionalidade | Descrição | Exemplo de Comando Natural |
+|----------------|-----------|-----------------------------|
+| Lembretes | Criar e gerenciar lembretes | "Crie um lembrete para ligar para minha mãe amanhã" |
+| Checkpoints | Registrar marcos de projetos | "Crie um checkpoint para o projeto website, concluí o design" |
+| Agenda | Visualizar eventos do calendário | "Mostre minha agenda de hoje", "O que tenho para a próxima semana?" |
+| Ajuda | Mostrar comandos disponíveis | "O que você pode fazer?", "Me ajude com os comandos" |
 
 ### Configuration Options
 
