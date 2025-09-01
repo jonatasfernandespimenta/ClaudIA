@@ -1,5 +1,5 @@
 import blessed from 'blessed';
-import { askAgent } from './agent/agent';
+import { askAgent, getConversationMemory } from './agent/agent';
 import { logInfo, logError, logWarn } from './utils/logger';
 import { BoardVisualizer } from './utils/board-visualizer';
 import { CalendarBoardVisualizer } from './utils/calendar-board-visualizer';

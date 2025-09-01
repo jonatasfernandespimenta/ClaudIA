@@ -1,7 +1,15 @@
 import { tool } from "@langchain/core/tools";
 import { z } from "zod";
-import { getBrazilDateTimeToolSchema } from "./utils-schemas";
+import { getBrazilDateTimeToolSchema, getShortTermMemorySchema } from "./utils-schemas";
 import { logInfo, logError } from "../../utils/logger";
+
+// Import the getConversationMemory from index to avoid circular dependencies
+let getConversationMemoryFn: () => string[] = () => [];
+
+// This will be set by the agent.ts file to avoid circular dependencies
+export function setMemoryAccessFunction(fn: () => string[]): void {
+  getConversationMemoryFn = fn;
+}
 
 /**
  * Obtém a data e hora atual no fuso horário de São Paulo/Brasil
@@ -94,6 +102,41 @@ export const getBrazilDateTimeTool = tool(
   }
 );
 
+export const getShortTermMemoryTool = tool(
+  async (input) => {
+    const { limit } = input as z.infer<typeof getShortTermMemorySchema>;
+    
+    logInfo('UtilsTool', 'Getting short-term memory via tool', { limit });
+    
+    try {
+      const memoryEntries = getConversationMemoryFn();
+      
+      const result = limit ? memoryEntries.slice(-limit) : memoryEntries;
+      
+      logInfo('UtilsTool', 'Short-term memory retrieved successfully via tool', { 
+        totalEntries: memoryEntries.length,
+        returnedEntries: result.length
+      });
+      
+      return {
+        memories: result,
+        count: result.length,
+        totalCount: memoryEntries.length,
+        message: `Memória de curto prazo recuperada com sucesso (${result.length} de ${memoryEntries.length} entradas)`
+      };
+    } catch (error) {
+      logError('UtilsTool', 'Error getting short-term memory via tool', error as Error);
+      throw error;
+    }
+  },
+  {
+    name: "get_short_term_memory",
+    description: "Recupera as entradas de memória de curto prazo (histórico de conversas sumarizado)",
+    schema: getShortTermMemorySchema
+  }
+);
+
 export const utilsTools = [
-  getBrazilDateTimeTool
+  getBrazilDateTimeTool,
+  getShortTermMemoryTool
 ];

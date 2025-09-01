@@ -1,92 +1,33 @@
-import { createReactAgent } from '@langchain/langgraph/prebuilt';
-import { ChatOpenAI } from '@langchain/openai';
-import { tools } from './tool-inventory';
-import { getPersonalizedPrompt } from './prompts';
-import { logInfo, logError, logWarn } from '../utils/logger';
+import { logInfo } from '../utils/logger';
+import { AgentManager } from './agents/agent-manager';
+import { setMemoryAccessFunction } from './tools/utils-tools';
 
-logInfo('Agent', 'Initializing OpenAI ChatGPT model', { model: 'gpt-4o-mini' });
+let agentManager: AgentManager | null = null;
 
-const model = new ChatOpenAI({
-  model: 'gpt-4o-mini',
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
-logInfo('Agent', 'Creating React agent with LangGraph', { toolsCount: tools.length });
-
-const agent = createReactAgent({
-  llm: model,
-  tools,
-});
-
-type Message = {
-  role: 'system' | 'user' | 'assistant';
-  content: string;
-};
-
-// Carregar o nome do usuário do .env e personalizar o prompt
-const userName = process.env.USER_NAME;
-const personalizedPrompt = getPersonalizedPrompt(userName);
-
-logInfo('Agent', 'Loading user configuration', { 
-  hasUserName: !!userName, 
-  userName: userName ? `${userName.charAt(0)}***` : 'not set' // Log parcialmente por privacidade
-});
-
-const messages: Message[] = [
-  {
-    role: 'system',
-    content: personalizedPrompt,
-  },
-];
+function getAgentManager(): AgentManager {
+  if (!agentManager) {
+    logInfo('Agent', 'Creating new AgentManager instance');
+    agentManager = new AgentManager();
+  }
+  return agentManager;
+}
 
 export async function askAgent(question: string): Promise<string> {
-  logInfo('Agent', 'Received user question', { question, messageCount: messages.length });
+  logInfo('Agent', 'Received user question', { question });
   
-  try {
-    messages.push({ role: 'user', content: question });
-    
-    logInfo('Agent', 'Invoking agent with LangGraph', { recursionLimit: 50 });
-    const result: any = await agent.invoke({ messages }, { recursionLimit: 50 });
-
-    logInfo('Agent', 'Agent invocation completed', { result });
-
-    const last = result.messages[result.messages.length - 1] as Message & {
-      content: unknown;
-    };
-    
-    logInfo('Agent', 'Agent response received', { 
-      responseType: typeof last.content,
-      messageLength: result.messages.length 
-    });
-    
-    messages.push({
-      role: 'assistant',
-      content: typeof last.content === 'string' ? last.content : '',
-    });
-    
-    if (typeof last.content === 'string') {
-      logInfo('Agent', 'Returning string response', { responseLength: last.content.length });
-      return last.content;
-    }
-    
-    if (Array.isArray(last.content)) {
-      const contentArray = last.content as Array<{ text?: string }>;
-      const joinedContent = contentArray.map((part) => part.text ?? '').join('');
-      logInfo('Agent', 'Returning array-based response', { 
-        partsCount: contentArray.length, 
-        joinedLength: joinedContent.length 
-      });
-      return joinedContent;
-    }
-    
-    logWarn('Agent', 'Returning empty response due to unexpected content type');
-    return '';
-    
-  } catch (error) {
-    logError('Agent', 'Error processing agent question', error as Error, { question });
-    throw error;
-  }
+  const manager = getAgentManager();
+  const response = await manager.processUserInput(question);
+  
+  logInfo('Agent', 'Returning response from AgentManager', { responseLength: response.length });
+  return response;
 }
+
+export function getConversationMemory(): string[] {
+  const manager = getAgentManager();
+  return manager.getConversationMemory();
+}
+
+setMemoryAccessFunction(getConversationMemory);
 
 export default askAgent;
 
