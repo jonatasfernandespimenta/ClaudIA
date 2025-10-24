@@ -20,14 +20,17 @@ export interface LogEntry {
 export class Logger {
   private static instance: Logger;
   private logFilePath: string;
-  private enableFile: boolean;
 
   private constructor() {
     this.logFilePath = path.join(process.cwd(), 'logs', 'claudia.log');
-    this.enableFile = process.env.LOG_FILE == 'true';
     
     // Cria o diretório de logs se não existir
     this.ensureLogDirectoryExists();
+  }
+
+  // Getter para verificar se logging em arquivo está habilitado
+  private get enableFile(): boolean {
+    return process.env.LOG_FILE === 'true';
   }
 
   public static getInstance(): Logger {

@@ -3,6 +3,7 @@ import { MainAgent } from './main-agent';
 import { PlanningAgent } from './planning-agent';
 import { SummaryAgent } from './summary-agent';
 import { Message } from './base-agent';
+import { getKnowledgeContext } from '../tools/knowledge-tools';
 
 export class AgentManager {
   private mainAgent: MainAgent;
@@ -21,14 +22,19 @@ export class AgentManager {
     try {
       logInfo('AgentManager', 'Processing user input', { userInput, memoryLength: this.conversationMemory.length });
       
-      const inputWithMemory = this.addMemoryContext(userInput);
+      // Buscar conhecimento relevante
+      logInfo('AgentManager', 'Searching relevant knowledge');
+      const knowledgeContext = await getKnowledgeContext(userInput);
       
-      logInfo('AgentManager', 'Invoking planning agent');
-      const planResult = await this.planningAgent.invoke(inputWithMemory);
+      const inputWithMemory = this.addMemoryContext(userInput);
+      const inputWithKnowledge = knowledgeContext ? `${inputWithMemory}${knowledgeContext}` : inputWithMemory;
+      
+      logInfo('AgentManager', 'Invoking planning agent', { hasKnowledgeContext: !!knowledgeContext });
+      const planResult = await this.planningAgent.invoke(inputWithKnowledge);
       const plan = planResult.content;
       
       logInfo('AgentManager', 'Invoking main agent with plan context');
-      const mainAgentInput = `${inputWithMemory}\n\nHere's a plan to approach this request:\n${plan}`;
+      const mainAgentInput = `${inputWithKnowledge}\n\nHere's a plan to approach this request:\n${plan}`;
       const result = await this.mainAgent.invoke(mainAgentInput);
       
       await this.updateConversationMemory();

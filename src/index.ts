@@ -1,3 +1,8 @@
+import dotenv from 'dotenv';
+
+// Carregar variáveis de ambiente primeiro
+dotenv.config();
+
 import blessed from 'blessed';
 import { askAgent, getConversationMemory } from './agent/agent';
 import { logInfo, logError, logWarn } from './utils/logger';

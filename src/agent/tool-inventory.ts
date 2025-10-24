@@ -3,6 +3,7 @@ import { reminderTools } from "./tools/reminder-tools";
 import { calendarTools } from "./tools/calendar-tools";
 import { utilsTools } from "./tools/utils-tools";
 import { boardTools } from "./tools/board-tools";
+import { knowledgeTools } from "./tools/knowledge-tools";
 
 export const tools = [
   ...checkpointTools,
@@ -10,4 +11,5 @@ export const tools = [
   ...calendarTools,
   ...utilsTools,
   ...boardTools,
+  ...knowledgeTools,
 ];
