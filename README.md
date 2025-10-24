@@ -5,12 +5,13 @@
   <img src="https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
   <img src="https://img.shields.io/badge/LangChain-1C3C3C?style=for-the-badge&logo=langchain&logoColor=white" alt="LangChain" />
   <img src="https://img.shields.io/badge/OpenAI-412991?style=for-the-badge&logo=openai&logoColor=white" alt="OpenAI" />
+  <img src="https://img.shields.io/badge/Qdrant-DC244C?style=for-the-badge&logo=qdrant&logoColor=white" alt="Qdrant" />
   <img src="https://img.shields.io/badge/Prisma-2D3748?style=for-the-badge&logo=prisma&logoColor=white" alt="Prisma" />
 </p>
 
 ## 📋 Visão Geral
 
-ClaudIA é um assistente inteligente de produtividade executado via linha de comando (CLI) que combina o poder da Inteligência Artificial com uma interface terminal interativa e elegante. Construído com Node.js, TypeScript e potencializado pelo LangChain/LangGraph, o ClaudIA oferece uma experiência conversacional natural para gerenciar sua produtividade através de lembretes, checkpoints de projetos e integração com calendários.
+ClaudIA é um assistente inteligente de produtividade executado via linha de comando (CLI) que combina o poder da Inteligência Artificial com uma interface terminal interativa e elegante. Construído com Node.js, TypeScript e potencializado pelo LangChain/LangGraph, o ClaudIA oferece uma experiência conversacional natural para gerenciar sua produtividade através de lembretes, checkpoints de projetos, base de conhecimento inteligente e integração com calendários.
 
 ![Tela Principal do ClaudIA](readme_stuff/home_screen.png)
 *Interface principal do ClaudIA com chat conversacional*
@@ -37,6 +38,13 @@ ClaudIA é um assistente inteligente de produtividade executado via linha de com
 - **Gerenciamento de Status**: Controle o status (PENDING, IN_PROGRESS, COMPLETED, CANCELLED)
 - **Busca e Filtragem**: Encontre lembretes por status, data ou ID específico
 - **Atualizações em Tempo Real**: Atualize status e acompanhe progresso
+
+### 🧠 Base de Conhecimento Inteligente
+- **Armazenamento de Conhecimento**: Salve informações importantes que ClaudIA pode consultar depois
+- **Busca Semântica**: Encontre conhecimentos relevantes usando busca vetorial com Qdrant
+- **Estruturação Automática**: ClaudIA organiza automaticamente o texto mantendo todo o conteúdo
+- **Categorização**: Organize conhecimentos por categorias personalizadas
+- **Contexto Automático**: ClaudIA busca automaticamente conhecimentos relevantes para suas perguntas
 
 ### 📅 Integração com Calendários (Planejado)
 - **Suporte ao Google Calendar**: Integração com Google Calendar
@@ -67,6 +75,7 @@ ClaudIA é um assistente inteligente de produtividade executado via linha de com
 - Node.js (v16 ou superior)
 - npm ou yarn
 - Chave da API OpenAI (obrigatório)
+- Qdrant (para Base de Conhecimento - obrigatório)
 - Credenciais Google Calendar API (opcional)
 - Credenciais Microsoft Graph API (opcional)
 
@@ -173,6 +182,19 @@ Após executar o comando `claudia`, você entrará no modo interativo onde pode 
 🤖 ClaudIA: ✓ Status atualizado!
    - Lembrete: Revisar o código do backend
    - Status alterado para: IN_PROGRESS
+
+👤 Você: "Adicione este conhecimento: TypeScript permite tipagem estática em JavaScript"
+🤖 ClaudIA: ✓ Conhecimento adicionado com sucesso!
+   📝 Texto estruturado e armazenado
+   🏷️ Categoria: programação
+   🆔 ID: xyz789...
+   Este conhecimento agora está disponível para consultas futuras!
+
+👤 Você: "O que você sabe sobre TypeScript?"
+🤖 ClaudIA: 🔍 Encontrei 1 conhecimento relevante:
+   📚 TypeScript permite tipagem estática em JavaScript
+   🏷️ Categoria: programação
+   ...
 ```
 
 ![Detalhes de Reunião](readme_stuff/meeting_details.png)
@@ -195,9 +217,16 @@ Após executar o comando `claudia`, você entrará no modo interativo onde pode 
 - “Mostre lembretes desde [data]”
 
 **Busca e Análise:**
-- “Resumo da minha produtividade”
-- “Mostrar progresso dos projetos”
-- “O que eu fiz esta semana?”
+- "Resumo da minha produtividade"
+- "Mostrar progresso dos projetos"
+- "O que eu fiz esta semana?"
+
+**Base de Conhecimento:**
+- "Adicione este conhecimento: [texto com informações importantes]"
+- "Me ensine sobre [assunto]: [explicação detalhada]"
+- "Busque no meu conhecimento sobre [tema]"
+- "O que você sabe sobre [assunto]?"
+- "Adicione na categoria [nome]: [conteúdo]"
 
 ### Navegação na Interface
 
@@ -214,6 +243,9 @@ Crie um arquivo `.env` na raiz do projeto baseado no `.env.example`:
 ```env
 # Configuração da IA (OBRIGATÓRIO)
 OPENAI_API_KEY=sua_chave_openai_aqui
+
+# Base de Conhecimento (OBRIGATÓRIO)
+QDRANT_URL=http://localhost:6333
 
 # Google Calendar (OPCIONAL)
 GOOGLE_CLIENT_ID=seu_google_client_id
@@ -243,6 +275,65 @@ DATABASE_URL="file:./prisma/dev.db"
    ```env
    OPENAI_API_KEY=sk-proj-...
    ```
+
+### 🧠 Configuração da Base de Conhecimento (Qdrant)
+
+A Base de Conhecimento do ClaudIA utiliza o Qdrant, um banco de dados vetorial de alta performance, para armazenar e buscar conhecimentos de forma semântica.
+
+#### Instalar Qdrant
+
+**Opção 1: Docker (Recomendado)**
+
+```bash
+# Baixar e executar Qdrant com Docker
+docker run -p 6333:6333 -p 6334:6334 \
+    -v $(pwd)/qdrant_storage:/qdrant/storage:z \
+    qdrant/qdrant
+```
+
+**Opção 2: Docker Compose**
+
+Crie um arquivo `docker-compose.yml`:
+
+```yaml
+version: '3.8'
+services:
+  qdrant:
+    image: qdrant/qdrant:latest
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - ./qdrant_storage:/qdrant/storage
+```
+
+Execute:
+```bash
+docker-compose up -d
+```
+
+**Opção 3: Instalação Local**
+
+Visite a [documentação oficial do Qdrant](https://qdrant.tech/documentation/quick-start/) para instalar localmente.
+
+#### Configurar no ClaudIA
+
+Após instalar o Qdrant, adicione a URL ao seu arquivo `.env`:
+
+```env
+# Qdrant (obrigatório para Base de Conhecimento)
+QDRANT_URL=http://localhost:6333
+```
+
+**Nota:** O ClaudIA criará automaticamente a coleção necessária no Qdrant na primeira execução.
+
+#### Verificar Instalação
+
+Você pode verificar se o Qdrant está funcionando acessando:
+- **Dashboard Web**: http://localhost:6333/dashboard
+- **API Health**: http://localhost:6333/health
+
+---
 
 ### 🔧 Configuração de Calendários
 
@@ -497,6 +588,7 @@ ClaudIA/
 - **Node.js + TypeScript**: Base da aplicação
 - **LangChain/LangGraph**: Framework para agentes de IA
 - **OpenAI GPT-4o-mini**: Modelo de linguagem
+- **Qdrant**: Banco de dados vetorial para base de conhecimento
 - **Blessed**: Interface rica para terminal
 - **Prisma ORM**: Mapeamento objeto-relacional
 - **SQLite**: Banco de dados local
@@ -565,6 +657,7 @@ npm run package
 |----------------|-----------|-----------------------------|
 | Lembretes | Criar e gerenciar lembretes | "Crie um lembrete para ligar para minha mãe amanhã" |
 | Checkpoints | Registrar marcos de projetos | "Crie um checkpoint para o projeto website, concluí o design" |
+| Base de Conhecimento | Armazenar e buscar informações | "Adicione este conhecimento: [texto]", "O que você sabe sobre [tema]?" |
 | Agenda | Visualizar eventos do calendário | "Mostre minha agenda de hoje", "O que tenho para a próxima semana?" |
 | Ajuda | Mostrar comandos disponíveis | "O que você pode fazer?", "Me ajude com os comandos" |
 
@@ -623,4 +716,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 <p align="center">
   Made with ❤️ by the ClaudIA team
+</p>
+
+<p align="center">
+  <a href="README.md">🇧🇷 Português</a> • <a href="README.en.md">🇺🇸 English</a>
 </p>
